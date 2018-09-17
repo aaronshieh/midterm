@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'main',
-    'account',
+    'trading_simulator',
 ]
 
 MIDDLEWARE = [

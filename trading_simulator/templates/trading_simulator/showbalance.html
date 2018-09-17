@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>balance</title>
+    <style>
+    table{
+        border-collapse: collapse;
+        border: 1px solid black;
+    }
+    th, td{
+        border: 1px solid black;
+        padding: 5px;
+    }
+    </style>
+</head>
+<body>
+    <h1>account overview</h1>
+
+    <h3>Hi {{ account_.name }}!</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Currency Name</th>
+                <th>Symbol</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>US Dollars</td>
+                <td>USD</td>
+                <td>{{ balance_.USDbalance|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Bitcoin</td>
+                <td>BTC</td>
+                <td>{{ balance_.BTCbalance|floatformat:8 }}</td>
+            </tr>
+            <tr>
+                <td>Ethereum</td>
+                <td>ETH</td>
+                <td>{{ balance_.ETHbalance|floatformat:8 }}</td>
+            </tr>
+            <tr>
+                <td>EOS</td>
+                <td>EOS</td>
+                <td>{{ balance_.EOSbalance|floatformat:8 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h3>Trade History</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Currency</th>
+                <th>Amount</th>
+                <th>Price</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trade in tradeHistory_|dictsortreversed:'date' %}
+            <tr>
+                <td>{{ trade.tradeType }}</td>
+                <td>{{ trade.coinId.name }}</td>
+                <td>{{ trade.amount|floatformat:8 }} {{ trade.coinId.symbol }}</td>
+                <td>{{ trade.price|floatformat:2 }}</td>
+                <td>{{ trade.date|date:"Y/m/d H:i:s" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

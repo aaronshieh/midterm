@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>trade</title>
+    <style>
+    th, td{
+        border: 1px solid black;
+    }
+    </style>
+</head>
+<body>
+    <h1>trade</h1>
+
+    <h3 id="USDbalance">Funds available:</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Currency Name</th>
+                <th>Symbol</th>
+                <th>Available Balance</th>
+                <th>Current Price</th>
+                <th>Trade</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Bitcoin</td>
+                <td>BTC</td>
+                <td id="BTCbalance"></td>
+                <td id="btcPrice">Current Price</td>
+                <td><input type="text" id="BTCamount" name="buyBTCamount"> 
+                    <input type="button" id="BTCbuy" class="btn" name="buyBTC" value="buy">
+                    <input type="button" id="BTCsell" class="btn" name="sellBTC" value="sell"></td>
+            </tr>
+            <tr>
+                <td>Ethereum</td>
+                <td>ETH</td>
+                <td id="ETHbalance"></td>
+                <td id="ethPrice">Current Price</td>
+                <td><input type="text" id="ETHamount" name="buyETHamount"> 
+                    <input type="button" id="ETHbuy" class="btn" name="buyETH" value="buy">
+                    <input type="button" id="ETHsell" class="btn" name="sellETH" value="sell"></td>
+            </tr>
+            <tr>
+                <td>EOS</td>
+                <td>EOS</td>
+                <td id="EOSbalance"></td>
+                <td id="eosPrice">Current Price</td>
+                <td><input type="text" id="EOSamount" name="buyEOSamount"> 
+                    <input type="button" id="EOSbuy" class="btn" name="buyEOS" value="buy">
+                    <input type="button" id="EOSsell" class="btn" name="sellEOS" value="sell"></td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        function showEOSprice(){
+            $.ajax({
+            method: "GET",
+            url: "https://api.coinmarketcap.com/v2/ticker/1765/",
+        })
+        .done(function( msg ) {
+            console.log(msg.data.quotes.USD.price);
+            $('#eosPrice').text(msg.data.quotes.USD.price + " USD");
+        });
+        };
+
+        function showBTCprice(){
+            $.ajax({
+                method: "GET",
+                url: "https://api.coinmarketcap.com/v2/ticker/1/",
+            })
+            .done(function( msg ) {
+                console.log(msg.data.quotes.USD.price);
+                $('#btcPrice').text(msg.data.quotes.USD.price + " USD");
+            });
+        };
+
+        function showETHprice(){
+            $.ajax({
+            method: "GET",
+            url: "https://api.coinmarketcap.com/v2/ticker/1027/",
+        })
+        .done(function( msg ) {
+            console.log(msg.data.quotes.USD.price);
+            $('#ethPrice').text(msg.data.quotes.USD.price + " USD");
+        });
+        };
+            
+        function getPrices(){
+            showBTCprice();
+            showETHprice();
+            showEOSprice();
+        }
+
+        getPrices();
+        var t = setInterval(getPrices, 10000);
+    </script>
+    <script>
+        var csrftoken = getCookie('csrftoken');
+
+        $('.btn').click(function(){
+            var amount = $(this).parent().children().first().val();
+            console.log(amount);
+
+            var type = $(this).val();
+            console.log(type);
+
+            var currency = $(this).parent().children().first().attr('id')
+            currency = currency.substr(0,3).toLowerCase();
+            console.log(currency);
+
+            var price = $('#'+currency+'Price').text().split(' ')[0];
+            console.log(price);
+
+            if(amount)
+                trade(price, amount, type, currency);
+            // else
+                //alert('enter an amount to trade');
+        });
+
+        function trade(price, amount, type, currency){
+            $.ajax({
+            method: "POST",
+            url: "/trade/",
+            data: {'price':price, 'amount':amount, 'type':type, 'currency':currency},
+            headers: {'X-CSRFToken':csrftoken},
+        })
+        .done(function( msg ) {
+            console.log(msg);
+        });
+        };
+
+        function updateBalance(){
+            $.ajax({
+            method: "POST",
+            url: "/getBalance/",
+            headers: {'X-CSRFToken':csrftoken},
+        })
+        .done(function( msg ) {
+            //console.log(msg[0].fields.USDbalance); test read returned JSON
+            $('#USDbalance').text("Funds available: " + msg[0].fields.USDbalance + " USD");
+            $('#BTCbalance').text(msg[0].fields.BTCbalance);
+            $('#ETHbalance').text(msg[0].fields.ETHbalance);
+            $('#EOSbalance').text(msg[0].fields.EOSbalance);
+        });
+        }
+
+        updateBalance();
+        var t2 = setInterval(updateBalance, 1000);
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }   
+            return cookieValue;
+        }
+    
+    </script>
+</body>
+</html>

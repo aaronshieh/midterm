@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Trading Simulator main</title>
+</head>
+<body>
+    <h1>Trading Simulator</h1>
+    {% if request.COOKIES.email %}
+    <h2>hello {{ request.COOKIES.email }}</h2>
+    {% else %}
+    <h2>hello guest, please login</h2>
+    {% endif %}
+    
+    <ul>
+        <li><a href="{% url 'trading_simulator:create' %}">Create account</a></li>
+        {% if request.COOKIES.email %}
+            <li><a href="{% url 'trading_simulator:deposit' request.COOKIES.accountId %}">deposit</a></li>
+            <li><a href="{% url 'trading_simulator:trading' request.COOKIES.accountId %}">trade</a></li>
+            <li><a href="{% url 'trading_simulator:balances' request.COOKIES.accountId %}">show balances</a></li>
+            <li><a href="/logout/">logout</a></li>
+        {% else %}
+            <li><a href="{% url 'trading_simulator:login' %}">login</a></li>
+        {% endif %}
+    </ul>
+</body>
+</html>
