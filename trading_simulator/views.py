@@ -93,10 +93,13 @@ def trade(request):
         account_ = account.objects.get(accountId=accountId)
         balance_ = balance.objects.get(accountId=accountId)
 
+        successfulTransaction = False
+
         if type_ == 'buy':
             total = float(price) * float(amount)
-            if total <= balance_.USDbalance:
+            if total <= balance_.USDbalance and total > 0:
                 balance_.USDbalance -= total
+                successfulTransaction = True
                 if currency == 'btc':
                     balance_.BTCbalance += float(amount)
                 elif currency == 'eth':
@@ -111,18 +114,23 @@ def trade(request):
                 if 0 < float(amount) <= balance_.BTCbalance:
                     balance_.BTCbalance -= float(amount)
                     balance_.USDbalance += total
+                    successfulTransaction = True
             elif currency == 'eth':
                 if 0 < float(amount) <= balance_.ETHbalance:
                     balance_.ETHbalance -= float(amount)
                     balance_.USDbalance += total
+                    successfulTransaction = True
             elif currency == 'eos':
                 if 0 < float(amount) <= balance_.EOSbalance:
                     balance_.EOSbalance -= float(amount)
                     balance_.USDbalance += total
+                    successfulTransaction = True
             balance_.save()
 
         # write to trade history table
-        tradeHistory.objects.create(tradeType=type_,
+        if successfulTransaction:
+            print("writing to trade history...")
+            tradeHistory.objects.create(tradeType=type_,
                                     amount=float(amount),
                                     price=float(price),
                                     date=datetime.datetime.now(),
