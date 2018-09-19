@@ -1,0 +1,25 @@
+<div class="jumbotron">
+    <h1 class="display-3">Trading Simulator</h1>
+
+    {% if request.COOKIES.email %}
+    <p class="lead">Logged in as: {{ request.COOKIES.email }}.</p>
+    {% else %}
+    <p class="lead">Hello guest, please login to start trading.</p>
+    {% endif %}
+
+    <hr class="my-4">
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <a href="{% url 'trading_simulator:create' %}" class="btn btn-primary btn-lg px-5">Create Account</a>
+        {% if request.COOKIES.email %}
+            <!-- <a href="{% url 'trading_simulator:deposit' request.COOKIES.accountId %}" class="btn btn-primary btn-lg px-5">Deposit</a> -->
+            <a href="{% url 'trading_simulator:trading' request.COOKIES.accountId %}" class="btn btn-primary btn-lg px-5">Trade</a>
+            <a href="{% url 'trading_simulator:balances' request.COOKIES.accountId %}" class="btn btn-primary btn-lg px-5">Account Overview</a>
+            <a href="/trading_simulator/logout/" class="btn btn-primary btn-lg px-5">Logout</a>
+        {% else %}
+            <a href="{% url 'trading_simulator:login' %}" class="btn btn-primary btn-lg px-5">Login</a>
+        {% endif %}
+    </div>
+</div>
+
+
+    

@@ -1,32 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>create</title>
-</head>
-<body>
-    <h1>create account</h1>
-    <form method="POST" autocomplete="off">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" name="name" id="name" placeholder="Name">
+{% extends 'base.html' %}
+{% block content %}
+{% include 'trading_simulator/nav.html' %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-6 mx-auto">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Create account</h3>
+                </div>
+                
+                <form id="create" method="POST" autocomplete="off">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" class="form-control" name="name" id="name" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" class="form-control" name="email" id="email" placeholder="Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd">Password</label>
+                        <input type="password" class="form-control" name="password" id="pwd" placeholder="Password">
+                    </div>
+                    <div class="form-group">
+                        <label for="initial">Initial USD balance</label>
+                        <input type="number" class="form-control" name="initial" id="initial" placeholder="Initial balance">
+                    </div>
+                    <input type="submit" id="submit" class="btn btn-primary form-control" value="Submit">
+                </form>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="email">Email address</label>
-            <input type="email" class="form-control" name="email" id="email" placeholder="Email">
-        </div>
-        <div class="form-group">
-            <label for="pwd">Password</label>
-            <input type="password" class="form-control" name="password" id="pwd" placeholder="Password">
-        </div>
-        <div class="form-group">
-            <label for="initial">Initial USD balance</label>
-            <input type="text" class="form-control" name="initial" id="initial" placeholder="Initial balance">
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $('#create').submit(function(event) {
+        let initial = parseFloat($('#initial').val());
+        
+        if(initial < 0 || isNaN(initial)){
+            alert("enter an initial balance!");
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+    });
+</script>
+{% endblock %}

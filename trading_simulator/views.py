@@ -13,7 +13,7 @@ def create(request):
         name = request.POST['name']
         email = request.POST['email']
         password = request.POST['password']
-        initial = request.POST['initial']
+        initial = float(request.POST['initial'])
 
         account.objects.create(name=name, email=email, password=password, initialAmount=initial)
         balance.objects.create(accountId=account.objects.get(email=email),
@@ -54,7 +54,7 @@ def login(request):
             # session
             request.session['id'] = account__.accountId
 
-            response = HttpResponse('login sucess...<script>location.href="/"</script>')
+            response = HttpResponse('login sucess...<script>location.href="/trading_simulator/"</script>')
             response.set_cookie("email", email)
             response.set_cookie("accountId", account__.accountId)
             return response
@@ -141,7 +141,7 @@ def trade(request):
         return response
 
 def logout(request):
-    response = HttpResponse("<script>location.href='/'</script>")
+    response = HttpResponse("<script>location.href='/trading_simulator/'</script>")
     response.delete_cookie('accountId')
     response.delete_cookie('email')
     

@@ -1,64 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>balance</title>
-    <style>
-    table{
-        border-collapse: collapse;
-        border: 1px solid black;
-    }
-    th, td{
-        border: 1px solid black;
-        padding: 5px;
-    }
-    </style>
-</head>
-<body>
-    <h1>account overview</h1>
-
-    <h3>Hi {{ account_.name }}!</h3>
-
-    <table>
-        <thead>
+{% extends 'base.html' %}
+{% block content %}
+{% include 'trading_simulator/nav.html' %}
+<div class="jumbotron" style="background-color:white; padding:50px 150px;">
+    <h1 class="display-4">Balances</h1>
+    <h3 id="totalBalance"></h1>
+    <table class="table table-bordered">
+        <thead class="bg-primary text-white">
             <tr>
                 <th>Currency Name</th>
                 <th>Symbol</th>
                 <th>Balance</th>
+                <th>Value (USD Equivalent)</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>US Dollars</td>
                 <td>USD</td>
-                <td>{{ balance_.USDbalance|floatformat:2 }}</td>
+                <td colspan="2">{{ balance_.USDbalance|floatformat:2 }}</td>
             </tr>
             <tr>
                 <td>Bitcoin</td>
                 <td>BTC</td>
                 <td>{{ balance_.BTCbalance|floatformat:8 }}</td>
+                <td id="BTCUSD"></td>
             </tr>
             <tr>
                 <td>Ethereum</td>
                 <td>ETH</td>
                 <td>{{ balance_.ETHbalance|floatformat:8 }}</td>
+                <td id="ETHUSD"></td>
             </tr>
             <tr>
                 <td>EOS</td>
                 <td>EOS</td>
                 <td>{{ balance_.EOSbalance|floatformat:8 }}</td>
+                <td id="EOSUSD"></td>
             </tr>
         </tbody>
     </table>
+            
+    <hr style="margin: 50px 0;">
 
-    <hr>
+    <h1 class="display-4">Trade History</h1>
 
-    <h3>Trade History</h3>
-
-    <table>
-        <thead>
+    <table class="table table-bordered">
+        <thead class="bg-primary text-white">
             <tr>
                 <th>Type</th>
                 <th>Currency</th>
@@ -70,7 +57,11 @@
         <tbody>
             {% for trade in tradeHistory_|dictsortreversed:'date' %}
             <tr>
-                <td>{{ trade.tradeType }}</td>
+                {% if trade.tradeType == 'buy' %}
+                    <td class="tradeType buy">{{ trade.tradeType }}</td>
+                {% elif trade.tradeType == 'sell' %}
+                    <td class="tradeType sell">{{ trade.tradeType }}</td>
+                {% endif %}
                 <td>{{ trade.coinId.name }}</td>
                 <td>{{ trade.amount|floatformat:8 }} {{ trade.coinId.symbol }}</td>
                 <td>{{ trade.price|floatformat:2 }}</td>
@@ -79,5 +70,93 @@
             {% endfor %}
         </tbody>
     </table>
-</body>
-</html>
+</div>
+
+<script>
+    var csrftoken = getCookie('csrftoken');
+    var prices = [];
+    var balances = [];
+
+    function getBTCprice(){
+        $.ajax({
+        method: "GET",
+        url: "https://api.coinmarketcap.com/v2/ticker/1/",
+    })
+        .done(function( msg ) {
+            prices[0] = msg.data.quotes.USD.price;
+    });}
+
+    function getETHprice(){
+        $.ajax({
+        method: "GET",
+        url: "https://api.coinmarketcap.com/v2/ticker/1027/",
+    })
+        .done(function( msg ) {
+            prices[1] = msg.data.quotes.USD.price;
+    });}
+
+    function getEOSprice(){
+        $.ajax({
+        method: "GET",
+        url: "https://api.coinmarketcap.com/v2/ticker/1765/",
+    })
+        .done(function( msg ) {
+            prices[2] = msg.data.quotes.USD.price;
+    });}
+
+    function updateBalance(){
+        $.ajax({
+        method: "POST",
+        url: "/trading_simulator/getBalance/",
+        headers: {'X-CSRFToken':csrftoken},
+    })
+    .done(function( msg ) {
+        balances[0] = msg[0].fields.BTCbalance;
+        balances[1] = msg[0].fields.ETHbalance;
+        balances[2] = msg[0].fields.EOSbalance;
+        balances[3] = msg[0].fields.USDbalance;
+    });}
+
+    function showEquivalentUSD(){
+        console.log("calculating equiv usd...");
+
+        updateBalance();
+        getBTCprice();
+        getETHprice();
+        getEOSprice();
+        
+        var BTCUSD = balances[0] * prices[0];
+        var ETHUSD = balances[1] * prices[1];
+        var EOSUSD = balances[2] * prices[2];
+        
+        $('#BTCUSD').text(BTCUSD.toFixed(2));
+        $('#ETHUSD').text(ETHUSD.toFixed(2));
+        $('#EOSUSD').text(EOSUSD.toFixed(2));
+
+        $('#totalBalance').text((BTCUSD+ETHUSD+EOSUSD+balances[3]).toFixed(2))
+            .prepend("Total approximate value: ")
+            .append(" USD");
+    }
+
+    var t = setInterval(showEquivalentUSD, 1000);
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }   
+        return cookieValue;
+    }
+
+    $('.tradeType.buy').parent().css("background-color", "#eeffe5");
+    $('.tradeType.sell').parent().css("background-color", "#ffe5e5");
+</script>
+{% endblock %}
