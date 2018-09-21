@@ -17,10 +17,8 @@ def create(request):
 
         account.objects.create(name=name, email=email, password=password, initialAmount=initial)
         balance.objects.create(accountId=account.objects.get(email=email),
-                                USDbalance=initial,
-                                BTCbalance=0.0,
-                                ETHbalance=0.0,
-                                EOSbalance=0.0)
+                                coinId=coin.objects.get(coinId=1),
+                                coinBalance=initial)
 
     return render(request, 'trading_simulator/create.html')
 
@@ -67,8 +65,11 @@ def login(request):
     return render(request, 'trading_simulator/login.html')
 
 def balances(request, id):
+    accountId = request.session['id']
+
     account_ = account.objects.get(accountId=id)
-    balance_ = balance.objects.get(accountId=id)
+    balance_ = balance.objects.filter(accountId=id)
+    coin_ = coin.objects.all()
     tradeHistory_ = tradeHistory.objects.filter(accountId=id)
 
     return render(request, 'trading_simulator/showbalance.html', locals())
@@ -82,50 +83,56 @@ def trade(request):
         price = request.POST['price']
         amount = request.POST['amount']
         type_ = request.POST['type']
-        currency = request.POST['currency']
+        coinId = request.POST['coinId']
 
         print("PRICE = " + price)
         print("AMOUNT = " + amount)
         print("ACCOUNT ID = " + "{}".format(accountId))
         print("TYPE = " + type_)
-        print("CURRENCY = " + currency)
+        print("COIN ID = " + coinId)
 
-        account_ = account.objects.get(accountId=accountId)
-        balance_ = balance.objects.get(accountId=accountId)
+        usd_balance = balance.objects.filter(accountId=accountId).get(coinId=1)
+        coin_balance = balance.objects.filter(accountId=accountId).filter(coinId=coinId)
+        total = float(price) * float(amount)
 
         successfulTransaction = False
 
-        if type_ == 'buy':
-            total = float(price) * float(amount)
-            if total <= balance_.USDbalance and total > 0:
-                balance_.USDbalance -= total
-                successfulTransaction = True
-                if currency == 'btc':
-                    balance_.BTCbalance += float(amount)
-                elif currency == 'eth':
-                    balance_.ETHbalance += float(amount)
-                elif currency == 'eos':
-                    balance_.EOSbalance += float(amount)
-            balance_.save()
-        
-        elif type_ == 'sell':
-            total = float(price) * float(amount)
-            if currency == 'btc':
-                if 0 < float(amount) <= balance_.BTCbalance:
-                    balance_.BTCbalance -= float(amount)
-                    balance_.USDbalance += total
+        if coin_balance:
+            print("already have this coin")
+            
+            if type_ == 'buy':
+                if total <= usd_balance.coinBalance and total > 0:
+                    print("have enough money to buy: " + str(usd_balance.coinBalance))
+                    usd_balance.coinBalance -= float(total)
+                    coin_balance[0].coinBalance += float(amount)
+                    print("new usd balance: " + str(usd_balance.coinBalance))
+                    print("new coin balance: " + str(coin_balance[0].coinBalance))
                     successfulTransaction = True
-            elif currency == 'eth':
-                if 0 < float(amount) <= balance_.ETHbalance:
-                    balance_.ETHbalance -= float(amount)
-                    balance_.USDbalance += total
+
+            elif type_ == 'sell':
+                print("have enough to sell: " + str(coin_balance[0].coinBalance))
+                if 0 < float(amount) <= coin_balance[0].coinBalance:
+                    coin_balance[0].coinBalance -= float(amount)
+                    usd_balance.coinBalance += total
+                    print("new usd balance: " + str(usd_balance.coinBalance))
+                    print("new coin balance: " + str(coin_balance[0].coinBalance))
                     successfulTransaction = True
-            elif currency == 'eos':
-                if 0 < float(amount) <= balance_.EOSbalance:
-                    balance_.EOSbalance -= float(amount)
-                    balance_.USDbalance += total
+
+            usd_balance.save()
+            coin_balance[0].save()
+            
+        else:
+            print("don't have this coin")
+
+            if type_ == 'buy':
+                if total <= usd_balance.coinBalance and total > 0:
+                    print("have enough money to buy: " + str(usd_balance.coinBalance))
+                    usd_balance.coinBalance -= float(total)
+                    balance.objects.create(accountId=account.objects.get(accountId=accountId),
+                                            coinId=coin.objects.get(coinId=coinId),
+                                            coinBalance=amount)
                     successfulTransaction = True
-            balance_.save()
+                    usd_balance.save()
 
         # write to trade history table
         if successfulTransaction:
@@ -135,9 +142,13 @@ def trade(request):
                                     price=float(price),
                                     date=datetime.datetime.now(),
                                     accountId=account.objects.get(accountId=accountId),
-                                    coinId=coin.objects.get(symbol=currency))
+                                    coinId=coin.objects.get(coinId=coinId))
 
-        response = HttpResponse('success')
+            response = HttpResponse('success')
+
+        else:
+            response = HttpResponse('failed')
+
         return response
 
 def logout(request):
@@ -151,7 +162,25 @@ def logout(request):
 
 def getBalance(request):
     accountId = request.session['id']
-    balance_ = serializers.serialize("json",
-                                    balance.objects.filter(accountId=accountId))
+    balance_ = serializers.serialize("json", balance.objects.filter(accountId=accountId).exclude(coinBalance=0))
+    account_ = serializers.serialize("json", account.objects.filter(accountId=accountId))
+    tradeHistory_ = serializers.serialize("json", tradeHistory.objects.filter(accountId=accountId))
 
+    import json
+
+    data = {'account':json.loads(account_), 
+            'balances':json.loads(balance_), 
+            'trades':json.loads(tradeHistory_)}
+    datastr = json.dumps(data)
+
+    return HttpResponse(datastr, content_type="application/json")
+
+def getCoins(request):
+    coin_ = serializers.serialize("json", coin.objects.all())
+
+    return HttpResponse(coin_, content_type="application/json")
+
+def getCoinBalance(request, coinId):
+    accountId = request.session['id']
+    balance_ = serializers.serialize("json", balance.objects.filter(accountId=accountId).filter(coinId=coinId))
     return HttpResponse(balance_, content_type="application/json")

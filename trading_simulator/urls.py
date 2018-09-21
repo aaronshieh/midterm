@@ -13,4 +13,6 @@ urlpatterns = [
     path('trade/', views.trade),
     path('logout/', views.logout),
     path('getBalance/', views.getBalance),
+    path('getCoins/', views.getCoins),
+    path('getCoinBalance/<int:coinId>/', views.getCoinBalance),
 ]

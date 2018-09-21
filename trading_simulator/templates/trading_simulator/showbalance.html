@@ -3,45 +3,53 @@
 {% include 'trading_simulator/nav.html' %}
 <div class="jumbotron" style="background-color:white; padding:50px 150px;">
     <h1 class="display-4">Balances</h1>
-    <h3 id="totalBalance"></h1>
+    <h3 id="totalBalance"></h3>
     <table class="table table-bordered">
         <thead class="bg-primary text-white">
             <tr>
                 <th>Currency Name</th>
-                <th>Symbol</th>
                 <th>Balance</th>
                 <th>Value (USD Equivalent)</th>
             </tr>
         </thead>
         <tbody>
+            {% for balance in balance_ %}
+            {% if balance.coinBalance != 0 %}
             <tr>
-                <td>US Dollars</td>
-                <td>USD</td>
-                <td colspan="2">{{ balance_.USDbalance|floatformat:2 }}</td>
+                <td>{{balance.coinId.name}}</td>
+                {% if balance.coinId.coinId == 1 %}
+                    <td>{{balance.coinBalance|floatformat:2}} {{balance.coinId.symbol}}</td>
+                    <td class="usdValue">{{ balance.coinBalance|floatformat:2}}</td>
+                {% else %}
+                    <td>{{balance.coinBalance|floatformat:8}} {{balance.coinId.symbol}}</td>
+                    <td class="usdValue">value</td>
+                {% endif %}
             </tr>
-            <tr>
-                <td>Bitcoin</td>
-                <td>BTC</td>
-                <td>{{ balance_.BTCbalance|floatformat:8 }}</td>
-                <td id="BTCUSD"></td>
-            </tr>
-            <tr>
-                <td>Ethereum</td>
-                <td>ETH</td>
-                <td>{{ balance_.ETHbalance|floatformat:8 }}</td>
-                <td id="ETHUSD"></td>
-            </tr>
-            <tr>
-                <td>EOS</td>
-                <td>EOS</td>
-                <td>{{ balance_.EOSbalance|floatformat:8 }}</td>
-                <td id="EOSUSD"></td>
-            </tr>
+            {% endif %}
+            {% endfor %}
         </tbody>
     </table>
             
     <hr style="margin: 50px 0;">
+    <h1 class="display-4">Progress</h1>
+    <table class="table table-bordered">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Initial Value</th>
+                <th>Current Value</th>
+                <th>Percent Gain/Loss</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td id='initialValue'></td>
+                <td id='currentValue'></td>
+                <td id='percentGain'></td>
+            </tr>
+        </tbody>
+    </table>
 
+    <hr style="margin: 50px 0;">
     <h1 class="display-4">Trade History</h1>
 
     <table class="table table-bordered">
@@ -64,7 +72,7 @@
                 {% endif %}
                 <td>{{ trade.coinId.name }}</td>
                 <td>{{ trade.amount|floatformat:8 }} {{ trade.coinId.symbol }}</td>
-                <td>{{ trade.price|floatformat:2 }}</td>
+                <td>{{ trade.price|floatformat:2 }} USD</td>
                 <td>{{ trade.date|date:"Y/m/d H:i:s" }}</td>
             </tr>
             {% endfor %}
@@ -74,71 +82,77 @@
 
 <script>
     var csrftoken = getCookie('csrftoken');
-    var prices = [];
-    var balances = [];
+    var coinsWithBalance = []
+    var coinList = [];  // all coins in db
 
-    function getBTCprice(){
+    (function getCoinList(){
         $.ajax({
-        method: "GET",
-        url: "https://api.coinmarketcap.com/v2/ticker/1/",
+        method: "POST",
+        url: "/trading_simulator/getCoins/",
+        headers: {'X-CSRFToken':csrftoken},
     })
-        .done(function( msg ) {
-            prices[0] = msg.data.quotes.USD.price;
-    });}
+    .done(function( msg ) {
+        console.log(msg);
+        $.each(msg, function(index, coin){
+            coinList.push({'coinId':coin.pk,
+                            'name':coin.fields.name, 
+                            'symbol':coin.fields.symbol,
+                            'cmcId':coin.fields.cmcId});
+        });
+        console.log(coinList);
+    })})();    
 
-    function getETHprice(){
-        $.ajax({
-        method: "GET",
-        url: "https://api.coinmarketcap.com/v2/ticker/1027/",
-    })
-        .done(function( msg ) {
-            prices[1] = msg.data.quotes.USD.price;
-    });}
-
-    function getEOSprice(){
-        $.ajax({
-        method: "GET",
-        url: "https://api.coinmarketcap.com/v2/ticker/1765/",
-    })
-        .done(function( msg ) {
-            prices[2] = msg.data.quotes.USD.price;
-    });}
-
-    function updateBalance(){
+    // retrieve coin list with balances > 0     
+    (function getBalance(){
         $.ajax({
         method: "POST",
         url: "/trading_simulator/getBalance/",
         headers: {'X-CSRFToken':csrftoken},
     })
     .done(function( msg ) {
-        balances[0] = msg[0].fields.BTCbalance;
-        balances[1] = msg[0].fields.ETHbalance;
-        balances[2] = msg[0].fields.EOSbalance;
-        balances[3] = msg[0].fields.USDbalance;
-    });}
+        $.each(msg.balances, function(idx, balance){
+            coinsWithBalance.push({'coinId':balance.fields.coinId,
+                                    'balance':balance.fields.coinBalance});
+        });
+        $('#initialValue').text(msg.account[0].fields.initialAmount.toFixed(2) + " USD");
+        console.log(coinsWithBalance);
+    })})();
 
-    function showEquivalentUSD(){
-        console.log("calculating equiv usd...");
-
-        updateBalance();
-        getBTCprice();
-        getETHprice();
-        getEOSprice();
+    // show equivalent usd values
+    var b1 = setInterval(function(){
+        $.each(coinsWithBalance, function(idx, coin){
+            if(coin.coinId != 1){
+                let cmcId;
+                $.each(coinList, function(idx_, coin_){
+                    if(coin_.coinId == coin.coinId){
+                        cmcId = coin_.cmcId;
+                    }
+                });
+                
+                $.ajax({
+                    method: "GET",
+                    url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
+                })
+                .done(function( msg ) {
+                    console.log(msg.data.quotes.USD.price);
+                    let coinPrice = msg.data.quotes.USD.price;
+                    $('.usdValue:eq('+idx+')').text((coinPrice * coin.balance).toFixed(2));
+                });
+            }
+        });
         
-        var BTCUSD = balances[0] * prices[0];
-        var ETHUSD = balances[1] * prices[1];
-        var EOSUSD = balances[2] * prices[2];
-        
-        $('#BTCUSD').text(BTCUSD.toFixed(2));
-        $('#ETHUSD').text(ETHUSD.toFixed(2));
-        $('#EOSUSD').text(EOSUSD.toFixed(2));
+        var total = 0;
+        for(i=0;i<coinsWithBalance.length;i++){
+            total += parseFloat($('.usdValue:eq('+i+')').text());
+        }
+        $('#totalBalance').text("Total account value: " + total.toFixed(2) + " USD");
+        $('#currentValue').text(total.toFixed(2) + " USD");
 
-        $('#totalBalance').text((BTCUSD+ETHUSD+EOSUSD+balances[3]).toFixed(2))
-            .prepend("Total approximate value: ")
-            .append(" USD");
-    }
-
-    var t = setInterval(showEquivalentUSD, 1000);
+        let currentValue = parseFloat($('#currentValue').text());
+        let initialValue = parseFloat($('#initialValue').text());
+        let percentGain = (currentValue - initialValue)/initialValue * 100;
+        $('#percentGain').text(percentGain.toFixed(2) + " %");
+    },1000);
 
     function getCookie(name) {
         var cookieValue = null;

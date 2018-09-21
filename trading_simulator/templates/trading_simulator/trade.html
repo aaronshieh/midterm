@@ -9,122 +9,135 @@
     }
 </style>
 <div class="jumbotron" style="background-color:white; padding:50px 150px;">
-    <h1 class="display-4">Trade</h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-8 mx-auto">
+                <h1 class="display-4">Trade</h1>
+                <h3 id="USDbalance">Funds available:</h3>
+            </div>
+        </div>
+    </div>
 
-    <h3 id="USDbalance">Funds available:</h3>
-
-    <table class="table table-bordered">
-        <thead class="bg-primary text-white">
-            <tr>
-                <th>Currency Name</th>
-                <th>Symbol</th>
-                <th>Available Balance</th>
-                <th>Current Price</th>
-                <th>Trade</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Bitcoin</td>
-                <td>BTC</td>
-                <td id="BTCbalance"></td>
-                <td id="btcPrice">Current Price</td>
-                <td>                    
-                    <input type="number" id="BTCamount" class="amount" name="buyBTCamount" placeholder="enter amount"> 
-                    <input type="button" id="BTCbuy" class="btn btn-success buy" name="buyBTC" value="buy">
-                    <input type="button" id="BTCsell" class="btn btn-danger sell" name="sellBTC" value="sell">
-                    <input type="button" id="BTCclear" class="btn btn-secondary clear" name="clearBTC" value="clear">
-                </td>
-            </tr>
-            <tr>
-                <td>Ethereum</td>
-                <td>ETH</td>
-                <td id="ETHbalance"></td>
-                <td id="ethPrice">Current Price</td>
-                <td>
-                    <input type="number" id="ETHamount" class="amount" name="buyETHamount" placeholder="enter amount"> 
-                    <input type="button" id="ETHbuy" class="btn btn-success buy" name="buyETH" value="buy">
-                    <input type="button" id="ETHsell" class="btn btn-danger sell" name="sellETH" value="sell">
-                    <input type="button" id="ETHclear" class="btn btn-secondary clear" name="clearETH" value="clear">
-                </td>
-            </tr>
-            <tr>
-                <td>EOS</td>
-                <td>EOS</td>
-                <td id="EOSbalance"></td>
-                <td id="eosPrice">Current Price</td>
-                <td>
-                    <input type="number" id="EOSamount" class="amount" name="buyEOSamount" placeholder="enter amount"> 
-                    <input type="button" id="EOSbuy" class="btn btn-success buy" name="buyEOS" value="buy">
-                    <input type="button" id="EOSsell" class="btn btn-danger sell" name="sellEOS" value="sell">
-                    <input type="button" id="EOSclear" class="btn btn-secondary clear" name="clearEOS" value="clear">
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="container">
+        <div class="row">
+            <div class="col-8 mx-auto" id="tradediv" style="background:rgb(211, 211, 211);padding:50px;border-radius: 5px;">
+                <label for="coins"><h3>Select a coin to trade:</h3></label>
+                <select class="form-control" name="coins" id="coinList"></select>
+                <hr>
+                <h3 id="price">Current price: </h3>
+                <hr>
+                <h3 id="balance">Current holdings: </h3>
+                <hr>
+                <div class="row">
+                    <div class="col-8 mx-auto">
+                        <input type="number" id="amount" class="amount" name="amount" placeholder="enter amount" autocomplete="off"> 
+                        <input type="button" id="buy" class="btn btn-success buy" name="buy" value="buy">
+                        <input type="button" id="sell" class="btn btn-danger sell" name="sell" value="sell">
+                        <input type="button" id="clear" class="btn btn-secondary clear" name="clear" value="clear">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-
-
-
-    
-
-
-
-
-
-
-<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
-<script src="{% static 'js/price.js' %}">
-    // function showEOSprice(){
-    //     $.ajax({
-    //     method: "GET",
-    //     url: "https://api.coinmarketcap.com/v2/ticker/1765/",
-    // })
-    // .done(function( msg ) {
-    //     console.log(msg.data.quotes.USD.price);
-    //     $('#eosPrice').text(msg.data.quotes.USD.price.toFixed(2) + " USD");
-    // });
-    // };
-
-    // function showBTCprice(){
-    //     $.ajax({
-    //         method: "GET",
-    //         url: "https://api.coinmarketcap.com/v2/ticker/1/",
-    //     })
-    //     .done(function( msg ) {
-    //         console.log(msg.data.quotes.USD.price);
-    //         $('#btcPrice').text(msg.data.quotes.USD.price.toFixed(2) + " USD");
-    //     });
-    // };
-
-    // function showETHprice(){
-    //     $.ajax({
-    //     method: "GET",
-    //     url: "https://api.coinmarketcap.com/v2/ticker/1027/",
-    // })
-    // .done(function( msg ) {
-    //     console.log(msg.data.quotes.USD.price);
-    //     $('#ethPrice').text(msg.data.quotes.USD.price.toFixed(2) + " USD");
-    // });
-    // };
-        
-    // function getPrices(){
-        //showBTCprice();
-        //showETHprice();
-        //showEOSprice();
-    // }
-
-    //getPrices();
-    //var t = setInterval(getPrices, 10000);
-</script>
 <script>
     var csrftoken = getCookie('csrftoken');
     var USDbalance;
+    var price;
+    var balance;
 
+    // Get list of all coins in db
+    var coinList = [];
+    (function getCoinList(){
+        $.ajax({
+        method: "POST",
+        url: "/trading_simulator/getCoins/",
+        headers: {'X-CSRFToken':csrftoken},
+    })
+    .done(function( msg ) {
+        console.log(msg);
+        $.each(msg, function(index, coin){
+            coinList.push({'coinId':coin.pk,
+                            'name':coin.fields.name, 
+                            'symbol':coin.fields.symbol,
+                            'cmcId':coin.fields.cmcId});
+        });
+        console.log(coinList);
+
+        // Add coins to list
+        $.each(coinList, function(idx, coin){
+            if(coin.coinId!=1){ // not usd
+                var option = $('<option></option>');
+                option.val(coin.cmcId);
+                option.append(coin.name);
+                $('#coinList').append(option);
+            }
+        });
+    })})();
+
+    // change coin in dropdown list
+    var price_interval;
+    var balance_interval;
+    $('#coinList').change(function(){
+        if(price_interval){
+            clearInterval(price_interval);
+        }
+        if(balance_interval){
+            clearInterval(balance_interval);
+        }
+        
+        // get price
+        let cmcId = $(this).children(':selected').val();
+        getCoinPrice(cmcId);
+        price_interval = setInterval(getCoinPrice.bind(null, cmcId), 1000);
+
+        // show coin balance
+        let coinId;
+        $.each(coinList, function(idx, coin){
+            if(coin.cmcId == cmcId){
+                coinId = coin.coinId;
+            }
+        });
+        getCoinBalance(coinId);
+        balance_interval = setInterval(getCoinBalance.bind(null, coinId), 1000);
+    });
+
+    // get price from CMC
+    function getCoinPrice(cmcId){
+        $.ajax({
+        method: "GET",
+        url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
+    })
+    .done(function( msg ) {
+        //console.log(msg.data.quotes.USD.price);
+        price = msg.data.quotes.USD.price;
+        $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2) + " USD");
+    })}
+
+    function getCoinBalance(coinId){
+        $.ajax({
+        method: "POST",
+        url: "/trading_simulator/getCoinBalance/"+coinId+"/",
+        headers: {'X-CSRFToken':csrftoken},
+    })
+    .done(function( msg ) {
+        balance = 0;
+        if(msg.length){
+            balance = msg[0].fields.coinBalance;
+        }
+        $('#balance').text("Current holdings: " + balance.toFixed(8));
+    })}
+
+    // initially, get & show btc price, balance
+    getCoinPrice(1);
+    price_interval = setInterval(getCoinPrice.bind(null, 1), 1000);
+    getCoinBalance(2);
+    balance_interval = setInterval(getCoinBalance.bind(null, 2), 1000);
+
+/*
     $('.amount').change(function(){
         let amount = $(this).val();
-        let price = $(this).parent().prev().text().split(' ')[0]
         if((amount * price) > USDbalance){
             //alert("not enough funds");
             $(this).val((USDbalance/price).toFixed(8));
@@ -132,60 +145,60 @@
             $(this).val("");
         }
     });
+*/
 
+    // clear amount input field
     $('.btn.clear').click(function(){
-        $(this).parent().children().first().val("");
+        $('#amount').val("");
     });
 
     $('.btn.buy, .btn.sell').click(function(){
-        var amount = $(this).parent().children().first().val();
-        console.log(amount);
+        let amount = $('#amount').val();
+        console.log("amount: " + amount);
 
-        var type = $(this).val();
-        console.log(type);
+        let type = $(this).val();
+        console.log("type: " + type);
 
-        var currency = $(this).parent().children().first().attr('id')
-        currency = currency.substr(0,3).toLowerCase();
-        console.log(currency);
+        let coinId;
+        let cmcId = $('#coinList').children(':selected').val();
+        $.each(coinList, function(idx, coin){
+            if(coin.cmcId == cmcId){
+                coinId = coin.coinId;
+            }
+        });
+        console.log("coinId: " + coinId);
 
-        var price = $('#'+currency+'Price').text().split(' ')[0];
-        console.log(price);
+        console.log("price: " + price);
 
         if(amount > 0)
-            trade(price, amount, type, currency);
+            trade(price, amount, type, coinId);
     });
 
-    function trade(price, amount, type, currency){
+    function trade(price, amount, type, coinId){
         console.log("sending trade...");
         $.ajax({
         method: "POST",
         url: "/trading_simulator/trade/",
-        data: {'price':price, 'amount':amount, 'type':type, 'currency':currency},
+        data: {'price':price, 'amount':amount, 'type':type, 'coinId':coinId},
         headers: {'X-CSRFToken':csrftoken},
     })
     .done(function( msg ) {
         console.log(msg);
-    });
-    };
+    })}
 
-    function updateBalance(){
+    function updateUSDBalance(){
         $.ajax({
         method: "POST",
-        url: "/trading_simulator/getBalance/",
+        url: "/trading_simulator/getCoinBalance/1/",
         headers: {'X-CSRFToken':csrftoken},
     })
     .done(function( msg ) {
-        //console.log(msg[0].fields.USDbalance); test read returned JSON
-        USDbalance = msg[0].fields.USDbalance;
+        USDbalance = msg[0].fields.coinBalance;
         $('#USDbalance').text("Funds available: " + USDbalance.toFixed(2) + " USD");
-        $('#BTCbalance').text(msg[0].fields.BTCbalance.toFixed(8));
-        $('#ETHbalance').text(msg[0].fields.ETHbalance.toFixed(8));
-        $('#EOSbalance').text(msg[0].fields.EOSbalance.toFixed(8));
-    });
-    }
+    })}
 
-    updateBalance();
-    var t2 = setInterval(updateBalance, 1000);
+    updateUSDBalance();
+    var t2 = setInterval(updateUSDBalance, 1000);
 
     function getCookie(name) {
         var cookieValue = null;
