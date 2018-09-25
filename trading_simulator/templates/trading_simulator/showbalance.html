@@ -31,7 +31,7 @@
     </table>
             
     <hr style="margin: 50px 0;">
-    <h1 class="display-4">Progress</h1>
+    <h1 class="display-4">Profits/Losses</h1>
     <table class="table table-bordered">
         <thead class="bg-primary text-white">
             <tr>
@@ -65,9 +65,9 @@
         <tbody>
             {% for trade in tradeHistory_|dictsortreversed:'date' %}
             <tr>
-                {% if trade.tradeType == 'buy' %}
+                {% if trade.tradeType == 'BUY' %}
                     <td class="tradeType buy">{{ trade.tradeType }}</td>
-                {% elif trade.tradeType == 'sell' %}
+                {% elif trade.tradeType == 'SELL' %}
                     <td class="tradeType sell">{{ trade.tradeType }}</td>
                 {% endif %}
                 <td>{{ trade.coinId.name }}</td>

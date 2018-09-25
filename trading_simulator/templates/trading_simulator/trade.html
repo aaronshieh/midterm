@@ -31,14 +31,43 @@
                 <div class="row">
                     <div class="col-8 mx-auto">
                         <input type="number" id="amount" class="amount" name="amount" placeholder="enter amount" autocomplete="off"> 
-                        <input type="button" id="buy" class="btn btn-success buy" name="buy" value="buy">
-                        <input type="button" id="sell" class="btn btn-danger sell" name="sell" value="sell">
-                        <input type="button" id="clear" class="btn btn-secondary clear" name="clear" value="clear">
+                        <input type="button" id="buy" class="btn btn-success buy" name="buy" value="BUY" data-toggle="modal" data-target="#orderConfirmModal" disabled>
+                        <input type="button" id="sell" class="btn btn-danger sell" name="sell" value="SELL" data-toggle="modal" data-target="#orderConfirmModal">
+                        <input type="button" id="clear" class="btn btn-secondary clear" name="clear" value="CLEAR">
                     </div>
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-12">
+                <hr>
+                <div id="orderAlert" class="alert alert-success" role="alert">
+                    
+                </div>
+            </div>
+        </div>
     </div>
+  
+  <!-- Modal -->
+  <div class="modal fade" id="orderConfirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderConfirmModalTitle">Order Confirmation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="orderConfirmModalBody">
+          [body]
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-modal-dismiss" data-dismiss="modal">CLOSE</button>
+          <button type="button" class="btn btn-success" id="btn-modal-action">[action]</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -46,6 +75,8 @@
     var USDbalance;
     var price;
     var balance;
+
+    $('#orderAlert').hide();
 
     // Get list of all coins in db
     var coinList = [];
@@ -147,18 +178,25 @@
     });
 */
 
+    // amount verification
+    $('#amount').on("keyup change", function(){
+        if($(this).val() == false || $(this).val() <= 0){
+            $('.btn.buy').prop("disabled", true);
+        } else {
+            $('.btn.buy').prop("disabled", false);          
+        }
+    });
+
     // clear amount input field
     $('.btn.clear').click(function(){
         $('#amount').val("");
     });
 
+    // order confirm 
     $('.btn.buy, .btn.sell').click(function(){
         let amount = $('#amount').val();
-        console.log("amount: " + amount);
-
         let type = $(this).val();
-        console.log("type: " + type);
-
+        
         let coinId;
         let cmcId = $('#coinList').children(':selected').val();
         $.each(coinList, function(idx, coin){
@@ -166,13 +204,61 @@
                 coinId = coin.coinId;
             }
         });
-        console.log("coinId: " + coinId);
+        let coinName;
+        $.each(coinList, function(idx, coin){
+            if(coin.cmcId == cmcId){
+                coinName = coin.name;
+            }
+        });
 
-        console.log("price: " + price);
+        $('#orderConfirmModalTitle').text(`${type} Order Confirmation`);
+        $('#orderConfirmModalBody').text(`${type} ${amount} ${coinName} at ${price} USD?`);
+        $('#btn-modal-action').text(`${type}`);
+        if(type == 'BUY'){
+            $('#btn-modal-action').removeClass("btn-danger");
+            $('#btn-modal-action').addClass("btn-success");
+        } else if(type == 'SELL'){
+            $('#btn-modal-action').removeClass("btn-success");
+            $('#btn-modal-action').addClass("btn-danger");
+        }
+    
+        $('#btn-modal-action').click(placeOrder.bind(null, price, amount, type, coinId));
 
-        if(amount > 0)
-            trade(price, amount, type, coinId);
+        function placeOrder(price, amount, type, coinId){
+            $('#btn-modal-action').off("click");
+            console.log("==placeOrder==");
+            console.log("amount: " + amount);
+            console.log("type: " + type);
+            console.log("coinId: " + coinId);
+            console.log("price: " + price);    
+            console.log("==============");
+            if(amount > 0)
+                trade(price, amount, type, coinId);
+            $('#btn-modal-dismiss').trigger("click");
+        };
     });
+
+    // $('.btn.buy, .btn.sell').click(function(){
+    //     let amount = $('#amount').val();
+    //     console.log("amount: " + amount);
+
+    //     let type = $(this).val();
+    //     console.log("type: " + type);
+
+    //     let coinId;
+    //     let cmcId = $('#coinList').children(':selected').val();
+    //     $.each(coinList, function(idx, coin){
+    //         if(coin.cmcId == cmcId){
+    //             coinId = coin.coinId;
+    //         }
+    //     });
+    //     console.log("coinId: " + coinId);
+
+    //     console.log("price: " + price);
+
+    //     if(amount > 0)
+    //         trade(price, amount, type, coinId);
+    // });
 
     function trade(price, amount, type, coinId){
         console.log("sending trade...");
@@ -184,6 +270,22 @@
     })
     .done(function( msg ) {
         console.log(msg);
+        if(msg == 'success'){
+            $('#orderAlert').hide();
+            $('#orderAlert').text(`${type} order successful!`);
+            $('#orderAlert').removeClass('alert-danger');
+            $('#orderAlert').addClass('alert-success');
+            $('#orderAlert').fadeIn(1000);
+            $('#orderAlert').fadeOut(2000);
+
+        } else if(msg == 'failed'){
+            $('#orderAlert').hide();
+            $('#orderAlert').text(`${type} order failed!`);
+            $('#orderAlert').removeClass('alert-success');
+            $('#orderAlert').addClass('alert-danger');
+            $('#orderAlert').fadeIn(1000);
+            $('#orderAlert').fadeOut(2000);
+        }
     })}
 
     function updateUSDBalance(){

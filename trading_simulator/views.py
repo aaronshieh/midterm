@@ -100,7 +100,7 @@ def trade(request):
         if coin_balance:
             print("already have this coin")
             
-            if type_ == 'buy':
+            if type_.lower() == 'buy':
                 if total <= usd_balance.coinBalance and total > 0:
                     print("have enough money to buy: " + str(usd_balance.coinBalance))
                     usd_balance.coinBalance -= float(total)
@@ -109,7 +109,7 @@ def trade(request):
                     print("new coin balance: " + str(coin_balance[0].coinBalance))
                     successfulTransaction = True
 
-            elif type_ == 'sell':
+            elif type_.lower() == 'sell':
                 print("have enough to sell: " + str(coin_balance[0].coinBalance))
                 if 0 < float(amount) <= coin_balance[0].coinBalance:
                     coin_balance[0].coinBalance -= float(amount)
@@ -124,7 +124,7 @@ def trade(request):
         else:
             print("don't have this coin")
 
-            if type_ == 'buy':
+            if type_.lower() == 'buy':
                 if total <= usd_balance.coinBalance and total > 0:
                     print("have enough money to buy: " + str(usd_balance.coinBalance))
                     usd_balance.coinBalance -= float(total)
