@@ -13,18 +13,20 @@
         <div class="row">
             <div class="col-8 mx-auto">
                 <h1 class="display-4">Trade</h1>
-                <h3 id="USDbalance">Funds available:</h3>
             </div>
         </div>
     </div>
 
     <div class="container">
         <div class="row">
-            <div class="col-8 mx-auto" id="tradediv" style="background:rgb(211, 211, 211);padding:50px;border-radius: 5px;">
+            <div class="col-8 mx-auto" id="tradediv" style="background:rgb(240, 240, 240);padding:50px;border-radius: 10px;">
                 <label for="coins"><h3>Select a coin to trade:</h3></label>
                 <select class="form-control" name="coins" id="coinList"></select>
                 <hr>
+                <h3 id="USDbalance">Funds available:</h3>
+                <hr>
                 <h3 id="price">Current price: </h3>
+                <span id="priceUpdatedTime">Last updated:</span>
                 <hr>
                 <h3 id="balance">Current holdings: </h3>
                 <hr>
@@ -70,6 +72,7 @@
   </div>
 </div>
 
+<script src="{% static 'js/getCookie.js' %}"></script>
 <script>
     var csrftoken = getCookie('csrftoken');
     var USDbalance;
@@ -143,6 +146,8 @@
     .done(function( msg ) {
         //console.log(msg.data.quotes.USD.price);
         price = msg.data.quotes.USD.price;
+        let datetime = new Date();
+        $('#priceUpdatedTime').text(`Last updated: ${datetime}`);
         $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2) + " USD");
     })}
 
@@ -165,18 +170,6 @@
     price_interval = setInterval(getCoinPrice.bind(null, 1), 1000);
     getCoinBalance(2);
     balance_interval = setInterval(getCoinBalance.bind(null, 2), 1000);
-
-/*
-    $('.amount').change(function(){
-        let amount = $(this).val();
-        if((amount * price) > USDbalance){
-            //alert("not enough funds");
-            $(this).val((USDbalance/price).toFixed(8));
-        } else if (amount < 0) {
-            $(this).val("");
-        }
-    });
-*/
 
     // amount verification
     $('#amount').on("keyup change", function(){
@@ -238,28 +231,6 @@
         };
     });
 
-    // $('.btn.buy, .btn.sell').click(function(){
-    //     let amount = $('#amount').val();
-    //     console.log("amount: " + amount);
-
-    //     let type = $(this).val();
-    //     console.log("type: " + type);
-
-    //     let coinId;
-    //     let cmcId = $('#coinList').children(':selected').val();
-    //     $.each(coinList, function(idx, coin){
-    //         if(coin.cmcId == cmcId){
-    //             coinId = coin.coinId;
-    //         }
-    //     });
-    //     console.log("coinId: " + coinId);
-
-    //     console.log("price: " + price);
-
-    //     if(amount > 0)
-    //         trade(price, amount, type, coinId);
-    // });
-
     function trade(price, amount, type, coinId){
         console.log("sending trade...");
         $.ajax({
@@ -271,20 +242,24 @@
     .done(function( msg ) {
         console.log(msg);
         if(msg == 'success'){
-            $('#orderAlert').hide();
-            $('#orderAlert').text(`${type} order successful!`);
-            $('#orderAlert').removeClass('alert-danger');
-            $('#orderAlert').addClass('alert-success');
-            $('#orderAlert').fadeIn(1000);
-            $('#orderAlert').fadeOut(2000);
+            $('#orderAlert').stop()
+                .fadeOut()
+                .text(`${type} order successful!`)
+                .removeClass('alert-danger')
+                .addClass('alert-success')
+                .fadeIn(500)
+                .delay(1500)
+                .fadeOut(2000);
 
         } else if(msg == 'failed'){
-            $('#orderAlert').hide();
-            $('#orderAlert').text(`${type} order failed!`);
-            $('#orderAlert').removeClass('alert-success');
-            $('#orderAlert').addClass('alert-danger');
-            $('#orderAlert').fadeIn(1000);
-            $('#orderAlert').fadeOut(2000);
+            $('#orderAlert').stop()
+                .fadeOut()
+                .text(`${type} order failed!`)
+                .removeClass('alert-success')
+                .addClass('alert-danger')
+                .fadeIn(500)
+                .delay(1500)
+                .fadeOut(2000);
         }
     })}
 
@@ -301,22 +276,6 @@
 
     updateUSDBalance();
     var t2 = setInterval(updateUSDBalance, 1000);
-
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }   
-        return cookieValue;
-    }
 
 </script>
 {% endblock %}
