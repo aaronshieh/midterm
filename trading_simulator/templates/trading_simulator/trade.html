@@ -141,14 +141,16 @@
     function getCoinPrice(cmcId){
         $.ajax({
         method: "GET",
-        url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
+        // url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
+        url: "/trading_simulator/getCMCcoin/",
+        data: {'ticker':cmcId}
     })
     .done(function( msg ) {
         //console.log(msg.data.quotes.USD.price);
         price = msg.data.quotes.USD.price;
         let datetime = new Date();
         $('#priceUpdatedTime').text(`Last updated: ${datetime}`);
-        $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2) + " USD");
+        $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
     })}
 
     function getCoinBalance(coinId){
@@ -271,7 +273,7 @@
     })
     .done(function( msg ) {
         USDbalance = msg[0].fields.coinBalance;
-        $('#USDbalance').text("Funds available: " + USDbalance.toFixed(2) + " USD");
+        $('#USDbalance').text("Funds available: " + USDbalance.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
     })}
 
     updateUSDBalance();

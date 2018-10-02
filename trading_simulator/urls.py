@@ -15,4 +15,5 @@ urlpatterns = [
     path('getBalance/', views.getBalance),
     path('getCoins/', views.getCoins),
     path('getCoinBalance/<int:coinId>/', views.getCoinBalance),
+    path('getCMCcoin/', views.getCMCcoin)
 ]

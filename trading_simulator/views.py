@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from trading_simulator.models import account, balance, tradeHistory, coin
 from django.core import serializers
-import datetime
+import datetime, requests
 
 # Create your views here.
 def index(request):
@@ -184,3 +184,11 @@ def getCoinBalance(request, coinId):
     accountId = request.session['id']
     balance_ = serializers.serialize("json", balance.objects.filter(accountId=accountId).filter(coinId=coinId))
     return HttpResponse(balance_, content_type="application/json")
+
+def getCMCcoin(request):
+    if request.method == 'GET':
+        ticker = request.GET['ticker']
+        request_url = 'https://api.coinmarketcap.com/v2/ticker/' + ticker
+        r = requests.get(request_url)
+        
+        return JsonResponse(r.json())
