@@ -124,7 +124,7 @@
         // get price
         let cmcId = $(this).children(':selected').val();
         getCoinPrice(cmcId);
-        price_interval = setInterval(getCoinPrice.bind(null, cmcId), 1000);
+        price_interval = setInterval(getCoinPrice.bind(null, cmcId), 5000);
 
         // show coin balance
         let coinId;
@@ -148,8 +148,8 @@
     .done(function( msg ) {
         //console.log(msg.data.quotes.USD.price);
         price = msg.data.quotes.USD.price;
-        let datetime = new Date();
-        $('#priceUpdatedTime').text(`Last updated: ${datetime}`);
+        let datetime = moment(new Date);
+        $('#priceUpdatedTime').text(`Last updated: ${datetime.format('h:mm:ss a')}`);
         $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
     })}
 
@@ -169,7 +169,7 @@
 
     // initially, get & show btc price, balance
     getCoinPrice(1);
-    price_interval = setInterval(getCoinPrice.bind(null, 1), 1000);
+    price_interval = setInterval(getCoinPrice.bind(null, 1), 5000);
     getCoinBalance(2);
     balance_interval = setInterval(getCoinBalance.bind(null, 2), 1000);
 

@@ -21,13 +21,17 @@
         </ol>
         <div class="carousel-inner">
             <div class="carousel-item active">
-            <img class="d-block w-100" src="{% static 'images/background1.jpg' %}" alt="First slide">
+                <img class="d-block w-100" src="{% static 'images/background1.jpg' %}" alt="First slide">
             </div>
             <div class="carousel-item">
-            <img class="d-block w-100" src="{% static 'images/background2.jpg' %}" alt="Second slide">
+                <a href="/trading_simulator/"><img class="d-block w-100" src="{% static 'images/background2.jpg' %}" alt="Second slide"></a>
+                <div class="carousel-caption d-none d-md-block">
+                    <h1 class="display-1">Trading Simulator</h1>
+                    <h3>Mock trade cryptocurrencies and track your progress!</h3>
+                </div>
             </div>
             <div class="carousel-item">
-            <img class="d-block w-100" src="{% static 'images/background3.jpg' %}" alt="Third slide">
+                <img class="d-block w-100" src="{% static 'images/background3.jpg' %}" alt="Third slide">
             </div>
         </div>
         <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
@@ -40,52 +44,69 @@
         </a>
     </div>  
 
-    {% block content %}
-    {% endblock %}
-
-    <div class="container-fluid padding my-5">
-        <div class="row welcome text-center">
-            <div class="col-12">
-                <h1 class="display-4">Meet the Team</h1>
-            </div>
-            <hr>
-        </div>
+    <div id="cryptoNews" class="container">
+        <br>
+        <div class="row"><h1 class="display-4">Crypto News</h1></div>    
     </div>
 
-    <div class="container-fluid px-5">
-        <div class="row padding">
-            <div class="col-md-4">
-                <div class="card">
-                    <img class="card-img-top" src="{% static 'images/aaron.jpg' %}">
-                    <div class="card-body">
-                        <h4 class="card-title">Aaron Shieh</h4>
-                        <p class="card-text">blah blah blah blah blah blah blah blah blah blah blah blah</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img class="card-img-top" src="">
-                    <div class="card-body">
-                        <h4 class="card-title">Hubert</h4>
-                        <p class="card-text">blah blah blah blah blah blah blah blah blah blah blah blah</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img class="card-img-top" src="">
-                    <div class="card-body">
-                        <h4 class="card-title">Huang Yi Xiang</h4>
-                        <p class="card-text">blah blah blah blah blah blah blah blah blah blah blah blah</p>
-                    </div>
-                </div>
-            </div>  
-        </div>
-    </div>
+    {% include 'footer.html' %}
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="{% static 'js/moment.js' %}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script>
+        // get crypto news articles from ccn.com
+        $.ajax({
+            method: "GET",
+            url: "/trading_simulator/getCryptoNews/"
+        })
+        .done(function( msg ) {
+            console.log(msg.articles);
+            
+            var count = 0;
+            var row, card_deck;
+            var docFrag = $(document.createDocumentFragment());
+
+            $.each(msg.articles, function(index, article){
+                if(count %3 == 0){
+                    br = $('<br>');
+                    row = $('<div class="row"></div>');
+                    card_deck = $('<div class="card-deck"></div');
+                        
+                    br.appendTo(row);
+                    card_deck.insertAfter(br);
+                    row.appendTo(docFrag);
+                }
+                if(index <= (msg.articles.length-1)-(msg.articles.length%3)){
+                    var card = $('<div class="card"></div>');
+                    var card_image = $('<img class="card-img-top">');
+                    var link = $('<a></a>');
+                    link.attr('href', article.link);
+                    link.attr('target', '_blank');
+                    card_image.attr("src", article.img);
+                    var card_body = $('<div class="card-body"></div>');
+                    var card_title = $('<h5 class="card-title"></h5>');
+                    card_title.text(article.title);
+                    var card_footer = $('<div class="card-footer"></div>');
+                    var card_date = $('<small class="text-muted"></small>');
+                    var date = moment(article.time);       
+                    card_date.text(date.startOf('hour').fromNow());
+
+                    link.appendTo(card);
+                    card_image.appendTo(link);
+                    card_body.appendTo(card);
+                    card_title.appendTo(card_body);
+                    card_date.appendTo(card_footer);
+                    card_footer.appendTo(card);
+                    card.appendTo(card_deck);
+                    count++;
+                }
+            })
+            docFrag.appendTo($('#cryptoNews'));
+        });
+
+        
+    </script>    
 </body>
 </html>

@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from trading_simulator.models import account, balance, tradeHistory, coin
 from django.core import serializers
-import datetime, requests
+from bs4 import BeautifulSoup
+import datetime, requests, json
 
 # Create your views here.
 def index(request):
@@ -166,8 +167,6 @@ def getBalance(request):
     account_ = serializers.serialize("json", account.objects.filter(accountId=accountId))
     tradeHistory_ = serializers.serialize("json", tradeHistory.objects.filter(accountId=accountId))
 
-    import json
-
     data = {'account':json.loads(account_), 
             'balances':json.loads(balance_), 
             'trades':json.loads(tradeHistory_)}
@@ -192,3 +191,32 @@ def getCMCcoin(request):
         r = requests.get(request_url)
         
         return JsonResponse(r.json())
+
+def getCryptoNews(request):
+    url = 'https://www.ccn.com/'
+
+    header = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
+    }
+
+    response = requests.get(url, headers=header)
+    soup = BeautifulSoup(response.text, "lxml")
+
+    article_list = []
+    articles = soup.select('.page-content .posts-row article')
+    for article in articles:
+        article_title = article.find('header').find('h4', class_="entry-title").find('a').string
+        article_link = article.find('header').find('h4', class_="entry-title").find('a').get('href')
+        article_image = article.find('div', class_='post-thumbnail').find('img').get('src')
+        article_date = article.find('header').find(class_="updated").get('datetime')
+        article_list.append({"title":article_title, "link":article_link, "img":article_image, "time":article_date})
+        # print(article_title)
+        # print(article_link)
+        # print(article_image)
+        # print(article_date)
+        # print('')
+
+    articles_ = {"articles":article_list}
+    # articles_ = json.dumps(articles_)
+    # print(articles_)
+    return JsonResponse(articles_)
