@@ -69,16 +69,17 @@
             var docFrag = $(document.createDocumentFragment());
 
             $.each(msg.articles, function(index, article){
-                if(count %3 == 0){
-                    br = $('<br>');
-                    row = $('<div class="row"></div>');
-                    card_deck = $('<div class="card-deck"></div');
-                        
-                    br.appendTo(row);
-                    card_deck.insertAfter(br);
-                    row.appendTo(docFrag);
-                }
                 if(index <= (msg.articles.length-1)-(msg.articles.length%3)){
+                    if(count %3 == 0){
+                        br = $('<br>');
+                        row = $('<div class="row"></div>');
+                        card_deck = $('<div class="card-deck"></div');
+                            
+                        br.appendTo(row);
+                        card_deck.insertAfter(br);
+                        row.appendTo(docFrag);
+                    }
+                    
                     var card = $('<div class="card"></div>');
                     var card_image = $('<img class="card-img-top">');
                     var link = $('<a></a>');
@@ -103,6 +104,7 @@
                     count++;
                 }
             })
+            $('<br>').insertAfter(row);
             docFrag.appendTo($('#cryptoNews'));
         });
 

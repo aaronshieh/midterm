@@ -53,7 +53,7 @@ def login(request):
             # session
             request.session['id'] = account__.accountId
 
-            response = HttpResponse('login sucess...<script>location.href="/trading_simulator/"</script>')
+            response = HttpResponse('login success...<script>location.href="/trading_simulator/balances/{}"</script>'.format(account__.accountId))
             response.set_cookie("email", email)
             response.set_cookie("accountId", account__.accountId)
             return response
@@ -61,7 +61,7 @@ def login(request):
         else:
             # login fail
             print('fail')
-            return redirect('/')
+            return HttpResponse('<script>alert("login failed...try again");location.href="/trading_simulator/login/";</script>')
 
     return render(request, 'trading_simulator/login.html')
 
