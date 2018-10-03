@@ -2,7 +2,7 @@
 {% load static %}
 {% block content %}
 {% include 'trading_simulator/nav.html' %}
-<div class="container">
+<div class="container" style="padding:50px 0px;">
     <h1 class="display-4">Balances</h1>
     <div id="chartContainer" style="height: 500px; width: 100%; margin:50px auto">rendering pie chart...</div>
     <div class="mx-auto">
@@ -84,6 +84,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <br>
 </div>
 
 <script src="{% static 'js/getCookie.js' %}"></script>
@@ -136,48 +137,58 @@
         showBalances();
     });}
 
+    function showBalancesHelper(){
+        totalValue = 0;
+        for(i=0;i<coinsWithBalance.length;i++){
+            totalValue += coinsWithBalance[i].usdValue;
+        }
+        $('#totalBalance').text("Total account value: " + totalValue.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
+        $('#currentValue').text(totalValue.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
+
+        let percentGain = (totalValue - initialValue)/initialValue * 100;
+        $('#percentGain').text(percentGain.toFixed(2) + " %");
+
+        renderPieChart();
+        $('#updateData').fadeIn(1000);
+    }
+
     // show equivalent usd values 
     function showBalances(){
         var coinsFetched = 0;
-        $.each(coinsWithBalance, function(idx, coin){
-            if(coin.coinId != 1){
-                let cmcId;
-                $.each(coinList, function(idx_, coin_){
-                    if(coin_.coinId == coin.coinId){
-                        cmcId = coin_.cmcId;
-                    }
-                });
 
-                $.ajax({
-                    method: "GET",
-                    // url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
-                    url: "/trading_simulator/getCMCcoin/",
-                    data: {'ticker':cmcId}
-                })
-                .done(function( msg ) {
-                    let coinPrice = msg.data.quotes.USD.price;
-                    coinsWithBalance[idx].usdValue = coinPrice * coin.balance;
-                    $('.usdValue:eq('+idx+')').text((coinsWithBalance[idx].usdValue).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-                    coinsFetched++;
-
-                    //last coin in list price fetched
-                    if(coinsFetched == coinsWithBalance.length-1){
-                        totalValue = 0;
-                        for(i=0;i<coinsWithBalance.length;i++){
-                            totalValue += coinsWithBalance[i].usdValue;
+        // only usd in account
+        if(coinsWithBalance.length == 1){
+            showBalancesHelper();
+        } else {
+            $.each(coinsWithBalance, function(idx, coin){
+                if(coin.coinId != 1){
+                    let cmcId;
+                    $.each(coinList, function(idx_, coin_){
+                        if(coin_.coinId == coin.coinId){
+                            cmcId = coin_.cmcId;
                         }
-                        $('#totalBalance').text("Total account value: " + totalValue.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
-                        $('#currentValue').text(totalValue.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
+                    });
 
-                        let percentGain = (totalValue - initialValue)/initialValue * 100;
-                        $('#percentGain').text(percentGain.toFixed(2) + " %");
+                    $.ajax({
+                        method: "GET",
+                        // url: "https://api.coinmarketcap.com/v2/ticker/"+cmcId+"/",
+                        url: "/trading_simulator/getCMCcoin/",
+                        data: {'ticker':cmcId}
+                    })
+                    .done(function( msg ) {
+                        let coinPrice = msg.data.quotes.USD.price;
+                        coinsWithBalance[idx].usdValue = coinPrice * coin.balance;
+                        $('.usdValue:eq('+idx+')').text((coinsWithBalance[idx].usdValue).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+                        coinsFetched++;
 
-                        renderPieChart();
-                        $('#updateData').fadeIn(1000);
-                    }
-                });
-            }
-        });
+                        //last coin in list price fetched
+                        if(coinsFetched == coinsWithBalance.length-1){
+                            showBalancesHelper();
+                        }
+                    });
+                } 
+            });
+        }
     };
     
     $('#updateData').click(showBalances);

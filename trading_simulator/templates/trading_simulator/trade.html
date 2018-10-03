@@ -21,7 +21,16 @@
         <div class="row">
             <div class="col-8 mx-auto" id="tradediv" style="background:rgb(240, 240, 240);padding:50px;border-radius: 10px;">
                 <label for="coins"><h3>Select a coin to trade:</h3></label>
-                <select class="form-control" name="coins" id="coinList"></select>
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <img id="coinImg" src="https://s2.coinmarketcap.com/static/img/coins/128x128/1.png">
+                        </div>
+                        <div class="col-9">
+                            <select class="form-control" name="coins" id="coinList"></select>
+                        </div>
+                    </div>
+                </div>
                 <hr>
                 <h3 id="USDbalance">Funds available:</h3>
                 <hr>
@@ -34,7 +43,7 @@
                     <div class="col-8 mx-auto">
                         <input type="number" id="amount" class="amount" name="amount" placeholder="enter amount" autocomplete="off"> 
                         <input type="button" id="buy" class="btn btn-success buy" name="buy" value="BUY" data-toggle="modal" data-target="#orderConfirmModal" disabled>
-                        <input type="button" id="sell" class="btn btn-danger sell" name="sell" value="SELL" data-toggle="modal" data-target="#orderConfirmModal">
+                        <input type="button" id="sell" class="btn btn-danger sell" name="sell" value="SELL" data-toggle="modal" data-target="#orderConfirmModal" disabled>
                         <input type="button" id="clear" class="btn btn-secondary clear" name="clear" value="CLEAR">
                     </div>
                 </div>
@@ -126,6 +135,9 @@
         getCoinPrice(cmcId);
         price_interval = setInterval(getCoinPrice.bind(null, cmcId), 5000);
 
+        // get image
+        $('#coinImg').attr('src', `https://s2.coinmarketcap.com/static/img/coins/128x128/${cmcId}.png`);
+
         // show coin balance
         let coinId;
         $.each(coinList, function(idx, coin){
@@ -149,7 +161,9 @@
         //console.log(msg.data.quotes.USD.price);
         price = msg.data.quotes.USD.price;
         let datetime = moment(new Date);
-        $('#priceUpdatedTime').text(`Last updated: ${datetime.format('h:mm:ss a')}`);
+        $('#priceUpdatedTime').fadeTo(500,0.3)
+            .text(`Last updated: ${datetime.format('h:mm:ss a')}`)
+            .fadeTo(500,1);
         $('#price').text("Current " + msg.data.symbol + " price: "+ msg.data.quotes.USD.price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + " USD");
     })}
 
@@ -174,21 +188,28 @@
     balance_interval = setInterval(getCoinBalance.bind(null, 2), 1000);
 
     // amount verification
-    $('#amount').on("keyup change", function(){
+    $('#amount').on("input", function(){
         if($(this).val() == false || $(this).val() <= 0){
             $('.btn.buy').prop("disabled", true);
+            $('.btn.sell').prop("disabled", true);
         } else {
             $('.btn.buy').prop("disabled", false);          
+            $('.btn.sell').prop("disabled", false);
         }
     });
 
     // clear amount input field
     $('.btn.clear').click(function(){
-        $('#amount').val("");
+        $('#amount').val("").trigger('input');
+    });
+
+    $('#balance').click(function(){
+        $('#amount').val(/\d+\.\d+/.exec($(this).text())).trigger('input');
     });
 
     // order confirm 
     $('.btn.buy, .btn.sell').click(function(){
+        $('#btn-modal-action').off("click");
         let amount = $('#amount').val();
         let type = $(this).val();
         
@@ -207,7 +228,7 @@
         });
 
         $('#orderConfirmModalTitle').text(`${type} Order Confirmation`);
-        $('#orderConfirmModalBody').text(`${type} ${amount} ${coinName} at ${price} USD?`);
+        $('#orderConfirmModalBody').text(`${type} ${amount} ${coinName} at ${price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')} USD per ${coinName}?`);
         $('#btn-modal-action').text(`${type}`);
         if(type == 'BUY'){
             $('#btn-modal-action').removeClass("btn-danger");
