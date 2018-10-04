@@ -2,8 +2,8 @@
 {% block content %}
 {% include 'trading_simulator/nav.html' %}
 <div class="container">
-    <div class="row">
-        <div class="col-md-6 col-md-offset-6 mx-auto" style="margin-bottom:200px;">
+    <div class="row align-items-center" style="margin:100px 0;">
+        <div class="col-md-6 col-md-offset-6 mx-auto">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Create account</h3>
@@ -13,21 +13,28 @@
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="name">Name</label>
-                        <input type="text" class="form-control" name="name" id="name" placeholder="Name">
+                        <input type="text" class="form-control" name="name" id="name" placeholder="enter a name">
                     </div>
                     <div class="form-group">
                         <label for="email">Email address</label>
-                        <input type="email" class="form-control" name="email" id="email" placeholder="Email">
+                        <input type="email" class="form-control" name="email" id="email" placeholder="enter an email address">
+                        <span id="emailHint"></span>
                     </div>
                     <div class="form-group">
                         <label for="pwd">Password</label>
-                        <input type="password" class="form-control" name="password" id="pwd" placeholder="Password">
+                        <input type="password" class="form-control" name="password" id="pwd" placeholder="enter a password">
+                        <span id="pwdHint"></span>
                     </div>
                     <div class="form-group">
                         <label for="initial">Initial USD balance</label>
-                        <input type="number" class="form-control" name="initial" id="initial" placeholder="Initial balance">
+                        <input type="number" class="form-control" name="initial" id="initial" placeholder="set an initial USD balance">
                     </div>
-                    <input type="submit" id="submit" class="btn btn-primary form-control" value="Submit">
+                    <hr>
+                    <div class="row">
+                        <div class="col-4 mx-auto">
+                            <input type="submit" id="submit" class="btn btn-primary form-control" value="Submit">
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -40,13 +47,79 @@
     $('#create').submit(function(event) {
         let initial = parseFloat($('#initial').val());
         
-        if(initial < 0 || isNaN(initial)){
-            alert("enter an initial balance!");
+        if(initial < 0 || isNaN(initial)) {
+            alert("enter an initial balance");
+        } else if(!checkName()) {
+            alert("enter a name");
+        } else if(!checkEmail()) {
+            alert("enter an email address");
+        } else if(!checkPassword()) {
+            alert("enter a password");
         } else {
             return;
         }
 
         event.preventDefault();
+    });
+    
+    function checkName(){
+        return $('#name').val() ? true : false;
+    }
+
+    function checkEmail(){
+        return $('#email').val() ? true : false;
+    }
+
+    function checkPassword(){
+        return $('#pwd').val() ? true : false;
+    }
+
+    $('#name').on('input', function(){
+        if($(this).val()!=''){
+            $(this).attr('style', 'border: 2px solid #0069d9');
+        } else {
+            $(this).attr('style', 'border: 2px solid #c82333');
+        }
+    });
+
+    $('#email').on('input', function(){
+        $('#emailHint').text("");
+        $.ajax({
+            method: "GET",
+            url: `/trading_simulator/validateEmail?email=${$(this).val()}`
+        })
+        .done(function(msg){
+            console.log(msg);
+            if(msg.length==0 && $('#email').val()!='' && /\w+@\w+\.\w+/.test($('#email').val())){
+                $('#email').attr('style', 'border: 2px solid #0069d9');
+            } else if(msg.length > 0){
+                $('#emailHint').text("email is in use, choose another");
+                $('#email').attr('style', 'border: 2px solid #c82333');
+            } else if($('#email').val()=='') {
+                $('#email').attr('style', 'border: 2px solid #c82333');
+            } else {
+                $('#email').attr('style', 'border: 2px solid #c82333');
+            }
+        });
+    });
+
+    $('#pwd').on('input', function(){
+        $('#pwdHint').text("");
+        if($(this).val()!='' && /.{4,}/.test($(this).val())){
+            $(this).attr('style', 'border: 2px solid #0069d9');
+        } else {
+            $('#pwdHint').text("password too short");
+            $(this).attr('style', 'border: 2px solid #c82333');
+        }
+    });
+
+    $('#initial').on('input', function(){
+        let value = $(this).val();
+        if($(this).val()!='' && value > 0){
+            $(this).attr('style', 'border: 2px solid #0069d9');
+        } else {
+            $(this).attr('style', 'border: 2px solid #c82333');
+        }
     });
 </script>
 {% endblock %}

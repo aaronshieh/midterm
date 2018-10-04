@@ -22,12 +22,12 @@
             {% for balance in balance_ %}
             {% if balance.coinBalance != 0 %}
             <tr>
-                <td>{{balance.coinId.name}}</td>
+                <td>{{balance.coinId.name|upper}}</td>
                 {% if balance.coinId.coinId == 1 %}
-                    <td>{{balance.coinBalance|floatformat:2}} {{balance.coinId.symbol}}</td>
+                    <td>{{balance.coinBalance|floatformat:2}} {{balance.coinId.symbol|upper}}</td>
                     <td class="usdValue">{{ balance.coinBalance|floatformat:2}}</td>
                 {% else %}
-                    <td>{{balance.coinBalance|floatformat:8}} {{balance.coinId.symbol}}</td>
+                    <td>{{balance.coinBalance|floatformat:8}} {{balance.coinId.symbol|upper}}</td>
                     <td class="usdValue">value</td>
                 {% endif %}
             </tr>
@@ -76,8 +76,8 @@
                 {% elif trade.tradeType == 'SELL' %}
                     <td class="tradeType sell">{{ trade.tradeType }}</td>
                 {% endif %}
-                <td>{{ trade.coinId.name }}</td>
-                <td>{{ trade.amount|floatformat:8 }} {{ trade.coinId.symbol }}</td>
+                <td>{{ trade.coinId.name|upper }}</td>
+                <td>{{ trade.amount|floatformat:8 }} {{ trade.coinId.symbol|upper }}</td>
                 <td>{{ trade.price|floatformat:2 }} USD</td>
                 <td>{{ trade.date|date:"Y/m/d H:i:s" }}</td>
             </tr>

@@ -20,8 +20,16 @@ def create(request):
         balance.objects.create(accountId=account.objects.get(email=email),
                                 coinId=coin.objects.get(coinId=1),
                                 coinBalance=initial)
+        
+        return redirect('/trading_simulator/login/')
 
     return render(request, 'trading_simulator/create.html')
+
+def validateEmail(request):
+    if request.method == 'GET':
+        email = request.GET['email']
+        email_in_db = serializers.serialize("json", account.objects.filter(email=email))
+    return HttpResponse(email_in_db, content_type="application/json")
 
 def deposit(request, id):
     balance_ = balance.objects.get(accountId=id)
@@ -66,17 +74,23 @@ def login(request):
     return render(request, 'trading_simulator/login.html')
 
 def balances(request, id):
-    accountId = request.session['id']
+    if 'id' in request.session:
+        accountId = request.session['id']
 
-    account_ = account.objects.get(accountId=id)
-    balance_ = balance.objects.filter(accountId=id)
-    coin_ = coin.objects.all()
-    tradeHistory_ = tradeHistory.objects.filter(accountId=id)
+        account_ = account.objects.get(accountId=id)
+        balance_ = balance.objects.filter(accountId=id)
+        coin_ = coin.objects.all()
+        tradeHistory_ = tradeHistory.objects.filter(accountId=id)
 
-    return render(request, 'trading_simulator/showbalance.html', locals())
+        return render(request, 'trading_simulator/showbalance.html', locals())
+    else:
+        return redirect('/trading_simulator/login/')
 
 def trading(request, id):
-    return render(request, 'trading_simulator/trade.html', locals())
+    if 'id' in request.session:
+        return render(request, 'trading_simulator/trade.html', locals())
+    else:
+        return redirect('/trading_simulator/login/')
 
 def trade(request):
     if request.method == 'POST':
@@ -187,7 +201,7 @@ def getCoinBalance(request, coinId):
 def getCMCcoin(request):
     if request.method == 'GET':
         ticker = request.GET['ticker']
-        request_url = 'https://api.coinmarketcap.com/v2/ticker/' + ticker
+        request_url = 'https://api.coinmarketcap.com/v2/ticker/' + ticker +'/'
         r = requests.get(request_url)
         
         return JsonResponse(r.json())

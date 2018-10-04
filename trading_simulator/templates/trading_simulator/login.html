@@ -2,11 +2,11 @@
 {% block content %}
 {% include 'trading_simulator/nav.html' %}
 <div class="container">
-    <div class="row">
-        <div class="col-md-6 col-md-offset-6 mx-auto" style="margin-bottom:200px;">
+    <div class="row align-items-center" style="margin:100px 0;">
+        <div class="col-md-4 col-md-offset-4 mx-auto">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Please sign in to your account</h3>
+                    <h3 class="panel-title">Sign in to your account</h3>
                 </div>
              
                 <form method="POST" autocomplete="off">
@@ -19,7 +19,12 @@
                         <!-- <label for="pwd">Password</label> -->
                         <input type="password" class="form-control" name="password" id="pwd" placeholder="Password">
                     </div>
-                    <button type="submit" class="btn btn-primary form-control">Login</button>
+                    <hr>
+                    <div class="row">
+                        <div class="col-4 mx-auto">
+                            <button type="submit" class="btn btn-primary form-control">Login</button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

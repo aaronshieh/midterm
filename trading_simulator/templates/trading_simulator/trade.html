@@ -50,10 +50,9 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-12">
+            <div class="col-8 mx-auto">
                 <hr>
                 <div id="orderAlert" class="alert alert-success" role="alert">
-                    
                 </div>
             </div>
         </div>
@@ -70,7 +69,11 @@
           </button>
         </div>
         <div class="modal-body" id="orderConfirmModalBody">
-          [body]
+          <h6 id="modal-coin-name">coin name</h6>
+          <h6 id="modal-amount">amount</h6>
+          <h6 id="modal-price">price</h6>
+          <hr>
+          <h5 id="modal-total">total</h5>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btn-modal-dismiss" data-dismiss="modal">CLOSE</button>
@@ -94,30 +97,31 @@
     var coinList = [];
     (function getCoinList(){
         $.ajax({
-        method: "POST",
-        url: "/trading_simulator/getCoins/",
-        headers: {'X-CSRFToken':csrftoken},
-    })
-    .done(function( msg ) {
-        console.log(msg);
-        $.each(msg, function(index, coin){
-            coinList.push({'coinId':coin.pk,
-                            'name':coin.fields.name, 
-                            'symbol':coin.fields.symbol,
-                            'cmcId':coin.fields.cmcId});
-        });
-        console.log(coinList);
+            method: "POST",
+            url: "/trading_simulator/getCoins/",
+            headers: {'X-CSRFToken':csrftoken},
+        })
+        .done(function( msg ) {
+            console.log(msg);
+            $.each(msg, function(index, coin){
+                coinList.push({'coinId':coin.pk,
+                                'name':coin.fields.name, 
+                                'symbol':coin.fields.symbol,
+                                'cmcId':coin.fields.cmcId});
+            });
+            console.log(coinList);
 
-        // Add coins to list
-        $.each(coinList, function(idx, coin){
-            if(coin.coinId!=1){ // not usd
-                var option = $('<option></option>');
-                option.val(coin.cmcId);
-                option.append(coin.name);
-                $('#coinList').append(option);
-            }
+            // Add coins to list
+            $.each(coinList, function(idx, coin){
+                if(coin.coinId!=1){ // not usd
+                    var option = $('<option></option>');
+                    option.val(coin.cmcId);
+                    option.append(`${coin.name.toUpperCase()} (${coin.symbol.toUpperCase()})`);
+                    $('#coinList').append(option);
+                }
+            });
         });
-    })})();
+    })();
 
     // change coin in dropdown list
     var price_interval;
@@ -214,21 +218,23 @@
         let type = $(this).val();
         
         let coinId;
+        let coinSymbol;
+        let coinName;
         let cmcId = $('#coinList').children(':selected').val();
         $.each(coinList, function(idx, coin){
             if(coin.cmcId == cmcId){
                 coinId = coin.coinId;
-            }
-        });
-        let coinName;
-        $.each(coinList, function(idx, coin){
-            if(coin.cmcId == cmcId){
                 coinName = coin.name;
+                coinSymbol = coin.symbol;
             }
         });
 
         $('#orderConfirmModalTitle').text(`${type} Order Confirmation`);
-        $('#orderConfirmModalBody').text(`${type} ${amount} ${coinName} at ${price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')} USD per ${coinName}?`);
+        $('#orderConfirmModalBody > #modal-coin-name').text(`COIN: ${coinName.toUpperCase()}`);
+        $('#orderConfirmModalBody > #modal-amount').text(`AMOUNT: ${amount} ${coinSymbol.toUpperCase()}`);
+        $('#orderConfirmModalBody > #modal-price').text(`PRICE: ${price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')} USD`);
+        $('#orderConfirmModalBody > #modal-total').text(`TOTAL: ${(amount*price).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')} USD`);
+        // $('#orderConfirmModalBody').text(`${type} ${amount} ${coinName} at ${price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')} USD per ${coinName} for a total of ${amount*price}?`);
         $('#btn-modal-action').text(`${type}`);
         if(type == 'BUY'){
             $('#btn-modal-action').removeClass("btn-danger");
