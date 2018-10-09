@@ -53,7 +53,7 @@ def login(request):
 
         account_ = account.objects.filter(email=email, password=password)
 
-        if account_:
+        if account_ and not account_[0].isAdmin:
             # login success
             print('success')
             account__ = account.objects.get(email=email, password=password)
@@ -65,6 +65,15 @@ def login(request):
             response.set_cookie("email", email)
             response.set_cookie("accountId", account__.accountId)
             return response
+
+        elif account_ and account_[0].isAdmin:
+            print('admin login')
+            account__ = account.objects.get(email=email, password=password)
+
+            # session
+            request.session['id'] = account__.accountId
+
+            return HttpResponse('admin login success...<script>location.href="/trading_simulator/admin/"</script>')
 
         else:
             # login fail
@@ -200,11 +209,15 @@ def getCoinBalance(request, coinId):
 
 def getCMCcoin(request):
     if request.method == 'GET':
-        ticker = request.GET['ticker']
-        request_url = 'https://api.coinmarketcap.com/v2/ticker/' + ticker +'/'
-        r = requests.get(request_url)
-        
-        return JsonResponse(r.json())
+        request_url = 'https://api.coinmarketcap.com/v2/ticker/'
+        if 'ticker' in request.GET:
+            ticker = request.GET['ticker']
+            request_url += ticker +'/'
+            r = requests.get(request_url)
+            return JsonResponse(r.json())
+
+        else:
+            return JsonResponse(requests.get(request_url).json())
 
 def getCryptoNews(request):
     url = 'https://www.ccn.com/'
@@ -234,3 +247,15 @@ def getCryptoNews(request):
     # articles_ = json.dumps(articles_)
     # print(articles_)
     return JsonResponse(articles_)
+
+def admin_index(request):
+    if 'id' in request.session:
+        account_ = account.objects.get(accountId=request.session['id'])
+        if account_.isAdmin:
+            print("admin")
+            return render(request, 'trading_simulator/admin.html', locals())
+        else:
+            print("not admin")
+            return redirect('/trading_simulator/login/')
+    else:
+        return redirect('/trading_simulator/login/')

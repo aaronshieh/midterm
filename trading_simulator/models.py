@@ -7,6 +7,7 @@ class account(models.Model):
     password = models.CharField(max_length=20)
     name = models.CharField(max_length=40)
     initialAmount = models.FloatField(default=0)
+    isAdmin = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'accounts'

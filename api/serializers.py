@@ -14,10 +14,11 @@ class CoinSerializer(serializers.ModelSerializer):
 class BalanceSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='coinId.name')
     symbol = serializers.ReadOnlyField(source='coinId.symbol')
+    cmcId = serializers.ReadOnlyField(source='coinId.cmcId')
 
     class Meta:
         model = balance
-        fields = ('accountId', 'name', 'symbol', 'coinBalance')
+        fields = ('accountId', 'name', 'symbol', 'coinBalance', 'cmcId')
 
 class TradeHistorySerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='coinId.name')

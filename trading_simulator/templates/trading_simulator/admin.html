@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row text-left" style="margin:100px 0;">
+        <div class="col">
+            <h1 class="display-4">Admin Panel</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#coin">Coins</a></li>
+                    <li class="breadcrumb-item"><a href="#account">Accounts</a></li>
+                    <li class="breadcrumb-item active"><a href="/trading_simulator/logout/">Logout</a></li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2 class="display-4"><a id="coin">Coins</a></h2>
+        </div>
+    </div> 
+    <hr>
+    <div class="row align-items-start">
+        <div class="col"> 
+            <h2 id="coinListTitle">Coin List</h2>
+            <table class="table table-bordered" id="coinList">
+                <thead class="bg-primary text-white">
+                    <th>coinId</th>
+                    <th>name</th>
+                    <th>symbol</th>
+                    <th>cmcId</th>
+                    <th>delete</th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>     
+        </div>
+        <div class="col">
+            <h2>Add Coin</h2>
+            <table class="table table-bordered" id="coinAdd">
+                <thead class="bg-primary text-white">
+                    <th>coin list</th>
+                    <th>name</th>
+                    <th>symbol</th>
+                    <th>cmcId</th>
+                    <th>add</th>
+                </thead>
+                <tbody>
+                    <td><select class="form-control" id="cmcCoinList"></select></td>
+                    <td>name</td>
+                    <td>symbol</td>
+                    <td>cmcId</td>
+                    <td><button id="btnAddCoin" class="btn btn-success"><i class="fas fa-plus"></i></button></td>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<br>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2 class="display-4"><a id="account">Accounts</a></h2>
+        </div>
+    </div> 
+    <hr>
+    <div class="row align-items-start">
+        <div class="col"> 
+            <h2 id="accountListTitle">Account List</h2>
+            <table class="table table-bordered" id="accountList">
+                <thead class="bg-primary text-white">
+                    <th>accountId</th>
+                    <th>name</th>
+                    <th>email</th>
+                    <th>edit/delete</th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>     
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row" style="margin-bottom: 100px">
+        <div class="col">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var coinList = [];
+    function getCoins(){
+        coinList = [];
+        $.ajax({
+            method: 'GET',
+            url: '/api/coin/'
+        }).done(function(msg){
+            console.log(msg);
+            $('#coinListTitle').text(`Coin List (${msg.length} coins total)`);
+            var docFrag = $(document.createDocumentFragment());
+            $.each(msg, function(index, coin){
+                if(coin.cmcId != 0) {
+                    var row = $('<tr></tr>');
+                    var coinId = $('<td></td>').html(coin.coinId);
+                    var name = $('<td></td>').html(coin.name);
+                    var symbol = $('<td></td>').html(coin.symbol);
+                    var cmcId = $('<td></td>').html(coin.cmcId);
+                    var edit = $('<td></td>').html('<button class="btnDeleteCoin btn btn-danger"><i class="fas fa-trash"></i></button>');
+                    row.append([coinId, name, symbol, cmcId, edit]);
+                    docFrag.append(row);
+                    coinList.push(coin.cmcId);
+                }
+            });
+            $('#coinList tbody').html(docFrag);
+            $('#coinAdd tbody td:nth-child(2)').text('');
+            $('#coinAdd tbody td:nth-child(3)').text('');
+            $('#coinAdd tbody td:nth-child(4)').text('');
+
+            getCMCCoins();
+        });
+    }
+    getCoins();
+
+    function getCMCCoins(){
+        $.ajax({
+            method: 'GET',
+            url: '/trading_simulator/getCMCcoin/'
+        }).done(function(msg){
+            console.log(msg);
+            var docFrag = $(document.createDocumentFragment());            
+            $.each(msg.data, function(index, coin){
+                if(!(coinList.includes(coin.id))){
+                    var option = $('<option></option>').val(coin.id).text(coin.name);
+                    docFrag.append(option);
+                }
+            });
+            $('#cmcCoinList').html(docFrag);
+            
+        });
+    }
+
+    $('#cmcCoinList').change(function(){
+        var ticker = $(this).val();
+        $.ajax({
+            method: 'GET',
+            url: '/trading_simulator/getCMCcoin/',
+            data: {'ticker':ticker}
+        }).done(function(msg){
+            console.log(msg);
+            $('#coinAdd tbody td:nth-child(2)').text(msg.data.name)
+            $('#coinAdd tbody td:nth-child(3)').text(msg.data.symbol)
+            $('#coinAdd tbody td:nth-child(4)').text(msg.data.id)
+        });
+    });
+
+    $('#btnAddCoin').click(function(){
+        var name = $('#coinAdd tbody td:nth-child(2)').text()
+        var symbol = $('#coinAdd tbody td:nth-child(3)').text()
+        var cmcId = $('#coinAdd tbody td:nth-child(4)').text()
+        $.ajax({
+            method: 'POST',
+            url: '/api/coin/',
+            data: {'name':name, 'symbol':symbol, 'cmcId':cmcId}
+        }).done(function(msg){
+            console.log(msg)
+            getCoins();
+        });
+    });
+
+    $('#coinList>tbody').on('click', '.btnDeleteCoin', function(){
+        var confirmDelete = confirm(`delete ${$(this).parent().parent().children('td:eq(1)').text()} from db?`);
+        if(confirmDelete){
+            var coinId = $(this).parent().parent().children('td:eq(0)').text();
+            $.ajax({
+                method: 'DELETE',
+                url: '/api/coin/' + coinId + '/',
+            }).done(function(msg){
+                console.log(msg)
+                getCoins();
+            });
+        }
+    });
+
+    function getAccounts(){
+        $.ajax({
+            method: 'GET',
+            url: '/api/account/'
+        }).done(function(msg){
+            console.log(msg);
+            $('#accountListTitle').text(`Account List (${msg.length} accounts total)`);
+            var docFrag = $(document.createDocumentFragment());
+            $.each(msg, function(index, account){
+                var row = $('<tr></tr>');
+                var accountId = $('<td></td>').html(account.accountId);
+                var name = $('<td></td>').html(account.name).attr('contenteditable','true');
+                var email = $('<td></td>').html(account.email).attr('contenteditable','true');
+                var edit = $('<td></td>').html('<button class="btnEditAccount btn btn-secondary"><i class="fas fa-user-edit"></i></button><button class="btnDeleteAccount btn btn-danger"><i class="fas fa-trash"></i></button>');
+                row.append([accountId, name, email, edit]);
+                docFrag.append(row);
+            });
+            $('#accountList tbody').html(docFrag);
+        });
+    }
+    getAccounts();
+
+    $('#accountList>tbody').on('click', '.btnDeleteAccount', function(){
+        var confirmDelete = confirm(`delete ${$(this).parent().parent().children('td:eq(1)').text()}'s account from db?'`);
+        if(confirmDelete) {
+            var accountId = $(this).parent().parent().children('td:eq(0)').text();
+            $.ajax({
+                method: 'DELETE',
+                url: '/api/account/' + accountId + '/',
+            }).done(function(msg){
+                console.log(msg)
+                getAccounts();
+            });
+        }
+    });
+    
+    $('#accountList>tbody').on('click', '.btnEditAccount', function(){
+        var accountId = $(this).parent().parent().children('td:eq(0)').text();
+        var name = $(this).parent().parent().children('td:eq(1)').text();
+        var email = $(this).parent().parent().children('td:eq(2)').text();
+        var data = {
+            "name":name, 
+            "email":email
+        };
+        
+        $.ajax({
+            method: 'GET',
+            url: '/trading_simulator/validateEmail?email='+email,
+        }).done(function(msg){
+            if(msg.length == 0){
+                $.ajax({
+                    method: 'PATCH',
+                    url: '/api/account/' + accountId + '/',
+                    'data': data
+                }).done(function(msg){
+                    console.log(msg)
+                    getAccounts();
+                }).fail(function(msg){
+                    console.log(msg)
+                    alert(msg.responseText)
+                    getAccounts();
+                });
+            } else {
+                alert("email already in use");
+            }
+        })
+    });
+    
+</script>
+{% endblock %}

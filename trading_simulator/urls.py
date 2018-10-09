@@ -18,4 +18,5 @@ urlpatterns = [
     path('getCMCcoin/', views.getCMCcoin),
     path('getCryptoNews/', views.getCryptoNews),
     path('validateEmail', views.validateEmail),
+    path('admin/', views.admin_index)
 ]
