@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+#btnToTop {
+  height: 50px;
+  width: 50px;
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  background-color: red;
+  color: white;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+#btnToTop:hover {
+  background-color: #555;
+}
+</style>
+
+<button id="btnToTop" title="Go to top"><i class="fas fa-caret-up"></i></button>
+
+<div class="container">
+    <div class="row text-left" style="margin:100px 0;">
+        <div class="col">
+            <h1 class="display-4">Top 100 Cryptocurrencies by Market Capitalization</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <table class="table table-bordered" id="top100">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Market Cap</th>
+                        <th>Price</th>
+                        <th>Volume (24h)</th>
+                        <th>Change (24h)</th>
+                        <!-- <th>Price Graph (7d)</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row" style="margin-bottom: 100px">
+        <div class="col">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var coinList = [];
+    $.getJSON('/trading_simulator/getCMCcoin/', function(msg){
+        console.log(msg);
+        $.each(msg.data, function(index, coin){
+            coinList.push({"id":coin.id,"name":coin.name});
+        });
+        console.log(coinList);
+    });
+
+    $.ajax({
+        method: "GET",
+        url: "/trading_simulator/getTop100/"
+    })
+    .done(function( msg ) {
+        console.log(msg.currencies);
+        
+        // var count = 0;
+        // var row, card_deck;
+        var docFrag = $(document.createDocumentFragment());
+
+        $.each(msg.currencies, function(index, currency){
+            let id = findCMCid(currency.name);
+            let row = $('<tr></tr>');
+            let td1 = $('<td></td>').text(currency.rank);
+            let td2 = $('<td></td>').append($('<img>').attr('src', `https://s2.coinmarketcap.com/static/img/coins/16x16/${id}.png`))
+                .append(' ' + currency.name);
+            let td3 = $('<td></td>').text(currency.marketcap);
+            let td4 = $('<td></td>').text(currency.price);
+            let td5 = $('<td></td>').text(currency.volume);
+            let td6 = $('<td></td>').text(currency.change);
+            // let td7 = $('<td></td>').append($('<img>').attr('src', currency.price_graph));
+            row.append([td1, td2, td3, td4, td5, td6]);
+            docFrag.append(row);
+        });
+
+        $('#top100').append(docFrag);
+    });
+    
+    function findCMCid(name){
+        for(let i=0;i<coinList.length;i++){
+            if(coinList[i].name == name){
+                return coinList[i].id;
+            }
+        }
+    }
+
+    // TO TOP
+    $('#btnToTop').click(topFunction);
+    window.onscroll = function() {scrollFunction()};
+
+    function scrollFunction() {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            document.getElementById("btnToTop").style.display = "block";
+            $('#btnToTop').fadeTo(500, 0.8);
+        } else {
+            document.getElementById("btnToTop").style.display = "none";
+        }
+    }
+
+    function topFunction() {
+        $('html, body').animate({ scrollTop: 0 }, 'slow');
+        $(this).fadeTo(500, 0);
+    }
+    // END TO TOP
+</script>
+{% endblock %}

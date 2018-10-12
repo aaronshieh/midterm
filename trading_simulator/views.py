@@ -184,6 +184,9 @@ def logout(request):
 
     return response
 
+def top100(request):
+    return render(request, 'trading_simulator/top100.html', locals())
+
 def getBalance(request):
     accountId = request.session['id']
     balance_ = serializers.serialize("json", balance.objects.filter(accountId=accountId).exclude(coinBalance=0))
@@ -247,6 +250,42 @@ def getCryptoNews(request):
     # articles_ = json.dumps(articles_)
     # print(articles_)
     return JsonResponse(articles_)
+
+def getTop100(request):
+    url = 'https://coinmarketcap.com/'
+
+    header = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
+    }
+
+    response = requests.get(url, headers=header)
+    soup = BeautifulSoup(response.text, "lxml")
+
+    currencies_list = []
+    currencies = soup.select('#currencies tbody tr')
+    for currency in currencies:
+        rank = int(currency.find('td').string)
+        logo = currency.select('img.logo-sprite')[0]['src']
+        name = currency.select('td.currency-name')[0]['data-sort']
+        marketcap = currency.select('td.market-cap')[0]['data-usd']
+        price = currency.select('a.price')[0]['data-usd']
+        volume = currency.select('a.volume')[0]['data-usd']
+        change = currency.select('td.percent-change')[0]['data-percentusd']
+        price_graph = currency.select('img.sparkline')[0]['src']
+
+        currencies_list.append({
+            "rank":rank,
+            "logo":logo,
+            "name":name, 
+            "marketcap":marketcap, 
+            "price":price,
+            "volume":volume,
+            "change":change,
+            "price_graph":price_graph
+        })
+
+    currencies_ = {"currencies":currencies_list}
+    return JsonResponse(currencies_)
 
 def admin_index(request):
     if 'id' in request.session:

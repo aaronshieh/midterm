@@ -1,5 +1,31 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+#btnToTop {
+  height: 50px;
+  width: 50px;
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  background-color: red;
+  color: white;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+#btnToTop:hover {
+  background-color: #555;
+}
+</style>
+
+<button id="btnToTop" title="Go to top"><i class="fas fa-caret-up"></i></button>
+
 <div class="container">
     <div class="row text-left" style="margin:100px 0;">
         <div class="col">
@@ -252,5 +278,23 @@
         })
     });
     
+    // TO TOP
+    $('#btnToTop').click(topFunction);
+    window.onscroll = function() {scrollFunction()};
+
+    function scrollFunction() {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            document.getElementById("btnToTop").style.display = "block";
+            $('#btnToTop').fadeTo(500, 0.8);
+        } else {
+            document.getElementById("btnToTop").style.display = "none";
+        }
+    }
+
+    function topFunction() {
+        $('html, body').animate({ scrollTop: 0 }, 'slow');
+        $(this).fadeTo(500, 0);
+    }
+    // END TO TOP
 </script>
 {% endblock %}
